@@ -1,0 +1,260 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =========================================================
+   MaliConnect — socle visuel
+   Palette inspirée du drapeau malien, retravaillée en version
+   sobre et premium : vert sahel profond, or discret, neutres chauds.
+   ========================================================= */
+
+@layer base {
+    :root {
+        color-scheme: light;
+
+        --background: 40 33% 99%;
+        --foreground: 165 24% 9%;
+
+        --card: 0 0% 100%;
+        --card-foreground: 165 24% 9%;
+
+        --popover: 0 0% 100%;
+        --popover-foreground: 165 24% 9%;
+
+        --primary: 158 74% 24%;
+        --primary-foreground: 40 33% 99%;
+
+        --secondary: 150 18% 95%;
+        --secondary-foreground: 160 40% 18%;
+
+        --muted: 40 20% 96%;
+        --muted-foreground: 160 8% 42%;
+
+        --accent: 150 25% 94%;
+        --accent-foreground: 160 45% 18%;
+
+        --destructive: 0 72% 51%;
+        --destructive-foreground: 0 0% 100%;
+
+        --success: 152 58% 36%;
+        --success-foreground: 0 0% 100%;
+
+        --warning: 38 92% 46%;
+        --warning-foreground: 32 80% 12%;
+
+        --info: 205 84% 46%;
+        --info-foreground: 0 0% 100%;
+
+        --border: 40 14% 88%;
+        --input: 40 14% 84%;
+        --ring: 158 74% 24%;
+
+        --chart-1: 158 74% 30%;
+        --chart-2: 38 92% 50%;
+        --chart-3: 205 84% 50%;
+        --chart-4: 12 76% 58%;
+        --chart-5: 280 55% 55%;
+
+        --radius: 0.875rem;
+
+        --sidebar-background: 40 33% 99%;
+        --sidebar-foreground: 165 20% 22%;
+        --sidebar-primary: 158 74% 24%;
+        --sidebar-primary-foreground: 40 33% 99%;
+        --sidebar-accent: 150 25% 94%;
+        --sidebar-accent-foreground: 158 60% 20%;
+        --sidebar-border: 40 14% 88%;
+        --sidebar-ring: 158 74% 24%;
+    }
+
+    .dark {
+        color-scheme: dark;
+
+        --background: 165 24% 6%;
+        --foreground: 40 24% 95%;
+
+        --card: 165 20% 8.5%;
+        --card-foreground: 40 24% 95%;
+
+        --popover: 165 20% 9%;
+        --popover-foreground: 40 24% 95%;
+
+        --primary: 152 62% 48%;
+        --primary-foreground: 165 40% 8%;
+
+        --secondary: 165 14% 14%;
+        --secondary-foreground: 40 20% 94%;
+
+        --muted: 165 12% 12%;
+        --muted-foreground: 150 8% 62%;
+
+        --accent: 165 14% 15%;
+        --accent-foreground: 40 20% 96%;
+
+        --destructive: 0 66% 56%;
+        --destructive-foreground: 0 0% 100%;
+
+        --success: 152 56% 52%;
+        --success-foreground: 165 40% 8%;
+
+        --warning: 38 92% 58%;
+        --warning-foreground: 32 80% 10%;
+
+        --info: 205 84% 60%;
+        --info-foreground: 165 40% 8%;
+
+        --border: 165 12% 18%;
+        --input: 165 12% 22%;
+        --ring: 152 62% 48%;
+
+        --chart-1: 152 62% 48%;
+        --chart-2: 38 92% 58%;
+        --chart-3: 205 84% 60%;
+        --chart-4: 12 76% 62%;
+        --chart-5: 280 55% 62%;
+
+        --sidebar-background: 165 24% 7%;
+        --sidebar-foreground: 40 20% 92%;
+        --sidebar-primary: 152 62% 48%;
+        --sidebar-primary-foreground: 165 40% 8%;
+        --sidebar-accent: 165 14% 14%;
+        --sidebar-accent-foreground: 40 20% 96%;
+        --sidebar-border: 165 12% 16%;
+        --sidebar-ring: 152 62% 48%;
+    }
+
+    * {
+        @apply border-border;
+    }
+
+    html {
+        -webkit-tap-highlight-color: transparent;
+        scroll-behavior: smooth;
+        text-rendering: optimizeLegibility;
+    }
+
+    body {
+        @apply min-h-svh bg-background font-sans text-foreground antialiased;
+        font-feature-settings:
+            'cv02' 1,
+            'cv03' 1,
+            'cv04' 1,
+            'cv11' 1;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        @apply font-display tracking-tight;
+        text-wrap: balance;
+    }
+
+    p {
+        text-wrap: pretty;
+    }
+
+    ::selection {
+        background-color: hsl(var(--primary) / 0.16);
+        color: hsl(var(--foreground));
+    }
+
+    :focus-visible {
+        @apply outline-none ring-2 ring-ring/60 ring-offset-2 ring-offset-background;
+    }
+
+    /* Barre de défilement discrète et cohérente avec l'interface. */
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: hsl(var(--border)) transparent;
+    }
+
+    *::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+
+    *::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    *::-webkit-scrollbar-thumb {
+        border: 3px solid transparent;
+        border-radius: 9999px;
+        background-color: hsl(var(--border));
+        background-clip: content-box;
+    }
+
+    *::-webkit-scrollbar-thumb:hover {
+        background-color: hsl(var(--muted-foreground) / 0.45);
+    }
+}
+
+@layer components {
+    /* Conteneur de page commun aux layouts publics et applicatifs. */
+    .page-container {
+        @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+    }
+
+    /* Surface de carte premium : bordure fine, ombre à peine perceptible. */
+    .surface-card {
+        @apply rounded-xl border border-border/80 bg-card text-card-foreground shadow-soft;
+    }
+
+    /* Effet de verre utilisé pour les headers collants. */
+    .glass-surface {
+        @apply border-border/70 bg-background/80 backdrop-blur-xl backdrop-saturate-150;
+    }
+
+    .no-scrollbar {
+        scrollbar-width: none;
+    }
+
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+@layer utilities {
+    .animation-delay-100 {
+        animation-delay: 100ms;
+    }
+
+    .animation-delay-200 {
+        animation-delay: 200ms;
+    }
+
+    .animation-delay-300 {
+        animation-delay: 300ms;
+    }
+
+    .animation-delay-500 {
+        animation-delay: 500ms;
+    }
+
+    .animation-delay-700 {
+        animation-delay: 700ms;
+    }
+
+    .text-shadow-sm {
+        text-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
+    }
+
+    /* Respecte la préférence système de réduction des animations. */
+    @media (prefers-reduced-motion: reduce) {
+        html {
+            scroll-behavior: auto;
+        }
+
+        *,
+        *::before,
+        *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            scroll-behavior: auto !important;
+            transition-duration: 0.01ms !important;
+        }
+    }
+}
