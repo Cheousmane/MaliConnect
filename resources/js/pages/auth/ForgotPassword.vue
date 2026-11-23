@@ -25,14 +25,14 @@ const submit = () => {
 
         <div
             v-if="status"
-            class="mb-5 flex items-start gap-2.5 rounded-lg border border-success/20 bg-success/10 px-3.5 py-3 text-sm text-success"
+            class="mb-5 flex items-start gap-2.5 rounded-lg border border-success/20 bg-success/10 px-3.5 py-3 text-sm text-success animate-scale-in"
             role="status"
         >
             <CheckCircle2 class="mt-0.5 size-4 shrink-0" aria-hidden="true" />
             <span>{{ status }}</span>
         </div>
 
-        <form @submit.prevent="submit" class="space-y-5">
+        <form @submit.prevent="submit" class="space-y-5 stagger-children">
             <FormField label="Adresse e-mail" for="email" :error="form.errors.email" required>
                 <div class="relative">
                     <Mail class="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
@@ -51,7 +51,7 @@ const submit = () => {
                 </div>
             </FormField>
 
-            <Button type="submit" variant="brand" size="lg" class="w-full" :disabled="form.processing">
+            <Button type="submit" variant="brand" size="lg" class="w-full press" :disabled="form.processing">
                 <LoaderCircle v-if="form.processing" class="size-4 animate-spin" aria-hidden="true" />
                 Envoyer le lien de réinitialisation
             </Button>

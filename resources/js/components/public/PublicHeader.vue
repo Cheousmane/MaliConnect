@@ -3,31 +3,46 @@ import AppLogo from '@/components/AppLogo.vue';
 import ThemeToggle from '@/components/ThemeToggle.vue';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { usePreviewMode } from '@/composables/usePreviewMode';
 import type { SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { ArrowRight, Menu } from 'lucide-vue-next';
+import { useScroll } from '@vueuse/core';
+import { ArrowRight, Menu, Search } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 const page = usePage<SharedData>();
 const authUser = computed(() => page.props.auth?.user ?? null);
-const isPreviewMode = usePreviewMode();
 
-const baseNavigation = [
-    { label: 'Fonctionnalités', href: '#fonctionnalites' },
+const { y } = useScroll(typeof window !== 'undefined' ? window : undefined);
+const scrolled = computed(() => y.value > 8);
+
+const scrollProgress = computed(() => {
+    if (typeof document === 'undefined') {
+        return 0;
+    }
+
+    const scrollable = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+
+    if (scrollable <= 0) {
+        return 0;
+    }
+
+    return Math.min(100, (y.value / scrollable) * 100);
+});
+
+const navigation = [
     { label: 'Catégories', href: '#categories' },
-    { label: 'Professionnels', href: '#annuaire' },
+    { label: 'Professionnels', href: '#professionnels' },
+    { label: 'Fonctionnement', href: '#fonctionnement' },
+    { label: 'Aperçu', href: '#apercu' },
+    { label: 'Tarifs', href: '#tarifs' },
 ];
-
-const navigation = computed(() =>
-    isPreviewMode.value
-        ? baseNavigation
-        : [...baseNavigation, { label: 'Recherche', href: '/recherche' }, { label: 'Aperçu mobile', href: '#apercu' }],
-);
 </script>
 
 <template>
-    <header class="glass-surface sticky top-0 z-40 border-b border-border/60">
+    <header
+        class="glass-surface sticky top-0 z-40 border-b transition-shadow duration-300"
+        :class="scrolled ? 'border-border/70 shadow-soft' : 'border-transparent'"
+    >
         <div class="page-container flex h-16 items-center justify-between gap-4 lg:h-[72px]">
             <Link :href="route('home')" class="shrink-0" aria-label="MaliConnect — Accueil">
                 <AppLogo />
@@ -38,7 +53,7 @@ const navigation = computed(() =>
                     v-for="item in navigation"
                     :key="item.label"
                     :href="item.href"
-                    class="rounded-lg px-3.5 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground"
+                    class="rounded-lg px-3.5 py-2 text-sm font-medium text-muted-foreground transition-colors duration-200 hover:bg-muted/70 hover:text-foreground"
                 >
                     {{ item.label }}
                 </a>
@@ -46,6 +61,13 @@ const navigation = computed(() =>
 
             <div class="flex items-center gap-1.5 sm:gap-2">
                 <ThemeToggle class="hidden sm:inline-flex" />
+
+                <Button as-child variant="ghost" size="sm" class="hidden gap-1.5 text-muted-foreground sm:inline-flex">
+                    <Link :href="route('search')">
+                        <Search class="size-4" aria-hidden="true" />
+                        Rechercher
+                    </Link>
+                </Button>
 
                 <template v-if="authUser">
                     <Button as-child variant="brand" size="sm" class="hidden sm:inline-flex">
@@ -84,6 +106,14 @@ const navigation = computed(() =>
                             </div>
 
                             <nav class="flex-1 space-y-1 overflow-y-auto p-4" aria-label="Navigation mobile">
+                                <Link
+                                    :href="route('search')"
+                                    class="flex items-center justify-between rounded-lg bg-brand-50 px-3 py-3 text-sm font-semibold text-brand-800 transition-colors hover:bg-brand-100 dark:bg-brand-950/60 dark:text-brand-200"
+                                >
+                                    Rechercher un professionnel
+                                    <Search class="size-4" aria-hidden="true" />
+                                </Link>
+
                                 <a
                                     v-for="item in navigation"
                                     :key="item.label"
@@ -121,5 +151,11 @@ const navigation = computed(() =>
                 </Sheet>
             </div>
         </div>
+
+        <div
+            class="pointer-events-none absolute inset-x-0 bottom-0 h-[2px] origin-left bg-brand-600/80 transition-[width] duration-200 ease-out dark:bg-brand-400/80"
+            :style="{ width: scrollProgress + '%' }"
+            aria-hidden="true"
+        />
     </header>
 </template>

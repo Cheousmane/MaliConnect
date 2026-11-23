@@ -1,57 +1,69 @@
 <script setup lang="ts">
 import AppLogo from '@/components/AppLogo.vue';
-import { usePreviewMode } from '@/composables/usePreviewMode';
-import { Link } from '@inertiajs/vue3';
-import { ArrowUpRight, Mail, MapPin } from 'lucide-vue-next';
+import { Button } from '@/components/ui/button';
+import type { SharedData } from '@/types';
+import { Link, usePage } from '@inertiajs/vue3';
+import { ArrowUpRight, Mail, MapPin, Search } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 const year = new Date().getFullYear();
-const isPreviewMode = usePreviewMode();
 
-const basePlatformLinks = [
-    { label: 'Fonctionnalités', href: '#fonctionnalites' },
-    { label: 'Catégories de services', href: '#categories' },
+const page = usePage<SharedData>();
+const authUser = computed(() => page.props.auth?.user ?? null);
+const ctaProHref = computed(() => (authUser.value ? route('pro.profiles.index') : route('register')));
+
+const platformLinks = [
+    { label: 'Rechercher un professionnel', href: route('search') },
+    { label: 'Toutes les catégories', href: route('categories.index') },
     { label: 'Comment ça marche', href: '#fonctionnement' },
+    { label: 'Transparence des tarifs', href: '#tarifs' },
 ];
 
-const platformLinks = computed(() =>
-    isPreviewMode.value
-        ? basePlatformLinks
-        : [
-              ...basePlatformLinks,
-              { label: 'Catalogue', href: '/categories' },
-              { label: 'Trouver un professionnel', href: '/recherche' },
-              { label: 'Aperçu mobile', href: '#apercu' },
-          ],
-);
-
-const professionalLinks = [
-    { label: 'Devenir professionnel', href: '#professionnels' },
-    { label: 'Créer mon profil', href: '/pro/profiles/create' },
+const professionalLinks = computed(() => [
+    { label: 'Développer mon activité', href: ctaProHref.value },
+    { label: 'Formules et tarifs', href: '#formules' },
     { label: 'Se connecter', href: route('login') },
     { label: 'Créer un compte', href: route('register') },
-];
+]);
 </script>
 
 <template>
     <footer class="border-t border-border/70 bg-muted/30">
         <div class="page-container py-12 sm:py-16">
-            <div class="grid gap-10 lg:grid-cols-[1.4fr_1fr_1fr_1.1fr]">
+            <div class="grid gap-10 lg:grid-cols-[1.5fr_1fr_1fr_1.1fr]">
                 <div class="max-w-sm">
-                    <AppLogo show-tagline />
+                    <AppLogo />
+
                     <p class="mt-5 text-sm leading-relaxed text-muted-foreground">
-                        MaliConnect prépare une plateforme simple et humaine pour rapprocher les particuliers des professionnels de confiance, partout
-                        au Mali.
+                        MaliConnect rapproche les particuliers des professionnels de confiance à Bamako : recherche locale, profils vérifiés et
+                        tarifs plus transparents.
                     </p>
+
+                    <div class="mt-5">
+                        <Button as-child variant="soft" size="sm">
+                            <Link :href="route('search')">
+                                <Search class="size-3.5" aria-hidden="true" />
+                                Trouver un professionnel
+                            </Link>
+                        </Button>
+                    </div>
                 </div>
 
                 <div>
                     <h3 class="text-sm font-semibold text-foreground">Plateforme</h3>
                     <ul class="mt-4 space-y-2.5">
                         <li v-for="link in platformLinks" :key="link.label">
-                            <a
+                            <Link
+                                v-if="!link.href.startsWith('#')"
                                 :href="link.href"
-                                class="text-sm text-muted-foreground transition-colors hover:text-brand-700 dark:hover:text-brand-300"
+                                class="text-sm text-muted-foreground transition-colors duration-200 hover:text-brand-700 dark:hover:text-brand-300"
+                            >
+                                {{ link.label }}
+                            </Link>
+                            <a
+                                v-else
+                                :href="link.href"
+                                class="text-sm text-muted-foreground transition-colors duration-200 hover:text-brand-700 dark:hover:text-brand-300"
                             >
                                 {{ link.label }}
                             </a>
@@ -64,12 +76,20 @@ const professionalLinks = [
                     <ul class="mt-4 space-y-2.5">
                         <li v-for="link in professionalLinks" :key="link.label">
                             <Link
+                                v-if="!link.href.startsWith('#')"
                                 :href="link.href"
-                                class="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-brand-700 dark:hover:text-brand-300"
+                                class="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors duration-200 hover:text-brand-700 dark:hover:text-brand-300"
                             >
                                 {{ link.label }}
-                                <ArrowUpRight v-if="link.href.startsWith('#')" class="size-3" aria-hidden="true" />
                             </Link>
+                            <a
+                                v-else
+                                :href="link.href"
+                                class="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors duration-200 hover:text-brand-700 dark:hover:text-brand-300"
+                            >
+                                {{ link.label }}
+                                <ArrowUpRight class="size-3" aria-hidden="true" />
+                            </a>
                         </li>
                     </ul>
                 </div>
@@ -86,11 +106,16 @@ const professionalLinks = [
                             <a href="mailto:contact@maliconnect.ml" class="transition-colors hover:text-foreground">contact@maliconnect.ml</a>
                         </li>
                     </ul>
+
+                    <p class="mt-5 text-xs leading-relaxed text-muted-foreground">
+                        Une question, un signalement ? Écrivez-nous : nous répondons depuis Bamako.
+                    </p>
                 </div>
             </div>
 
             <div class="mt-12 flex flex-col items-start justify-between gap-4 border-t border-border/70 pt-6 sm:flex-row sm:items-center">
                 <p class="text-xs text-muted-foreground">© {{ year }} MaliConnect. Tous droits réservés.</p>
+                <p class="text-xs text-muted-foreground">Profils vérifiés avant publication</p>
             </div>
         </div>
     </footer>

@@ -12,17 +12,18 @@ import type { LucideIcon } from 'lucide-vue-next';
 import {
     ArrowRight,
     ArrowUpRight,
+    CalendarClock,
     CalendarDays,
     CheckCircle2,
     Circle,
     ClipboardList,
     Clock,
-    Eye,
     Inbox,
-    MessageSquare,
     MoreHorizontal,
+    Send,
     Settings2,
     Sparkles,
+    Star,
     Users,
     Wrench,
 } from 'lucide-vue-next';
@@ -53,7 +54,20 @@ const profiles = computed(
         }>,
 );
 
-const breadcrumbs: BreadcrumbItem[] = [{ title: 'Vue d’ensemble', href: '/dashboard' }];
+interface ProfileCompletenessItem {
+    label: string;
+    complete: boolean;
+}
+
+interface ProfileCompleteness {
+    profile_id: number;
+    percentage: number;
+    items: ProfileCompletenessItem[];
+}
+
+const profileCompleteness = computed(() => (page.props as any).profileCompleteness as ProfileCompleteness | null);
+
+const breadcrumbs: BreadcrumbItem[] = [{ title: 'Tableau de bord', href: '/dashboard' }];
 
 const today = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
 
@@ -121,20 +135,70 @@ const requestColumns: TableColumn[] = [
 
 // Les messages seront disponibles prochainement (fonctionnalité en développement).
 
-const profileChecklist = [
-    { label: 'Photo de profil', complete: true },
-    { label: 'Présentation professionnelle', complete: true },
-    { label: 'Zone d’intervention', complete: true },
-    { label: 'Documents vérifiés', complete: false },
-];
+const profileCompletionHref = computed(() => {
+    const completeness = profileCompleteness.value;
+    return completeness ? route('pro.profiles.edit', completeness.profile_id) : route('pro.profiles.create');
+});
+
+interface ActivityItem {
+    id: string;
+    icon: string;
+    tone: string;
+    title: string;
+    description: string;
+    created_at: string;
+}
+
+const activityIconMap: Record<string, LucideIcon> = {
+    inbox: Inbox,
+    calendar: CalendarClock,
+    star: Star,
+    send: Send,
+};
+
+const activityToneClasses: Record<string, string> = {
+    brand: 'bg-brand-50 text-brand-600 dark:bg-brand-950/70 dark:text-brand-300',
+    info: 'bg-info/10 text-info',
+    warning: 'bg-gold-50 text-gold-600 dark:bg-gold-950/40 dark:text-gold-300',
+    success: 'bg-success/10 text-success',
+    neutral: 'bg-muted text-muted-foreground',
+};
+
+const formatRelativeTime = (value: string): string => {
+    const date = new Date(value);
+    const diffSeconds = Math.round((date.getTime() - Date.now()) / 1000);
+    const abs = Math.abs(diffSeconds);
+    const rtf = new Intl.RelativeTimeFormat('fr', { numeric: 'auto' });
+
+    if (abs < 60) return rtf.format(diffSeconds, 'second');
+    const diffMinutes = Math.round(diffSeconds / 60);
+    if (Math.abs(diffMinutes) < 60) return rtf.format(diffMinutes, 'minute');
+    const diffHours = Math.round(diffMinutes / 60);
+    if (Math.abs(diffHours) < 24) return rtf.format(diffHours, 'hour');
+    const diffDays = Math.round(diffHours / 24);
+    if (Math.abs(diffDays) < 30) return rtf.format(diffDays, 'day');
+    const diffMonths = Math.round(diffDays / 30);
+    if (Math.abs(diffMonths) < 12) return rtf.format(diffMonths, 'month');
+    return rtf.format(Math.round(diffMonths / 12), 'year');
+};
+
+const activities = computed(() =>
+    ((page.props as any).activities ?? []).map((activity: ActivityItem) => ({
+        ...activity,
+        iconComponent: activityIconMap[activity.icon] ?? Inbox,
+        toneClass: activityToneClasses[activity.tone] ?? activityToneClasses.neutral,
+        timeLabel: formatRelativeTime(activity.created_at),
+    })),
+);
 </script>
 
 <template>
-    <Head title="Vue d’ensemble" />
+    <Head title="Tableau de bord" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="space-y-6">
             <PageHeader
+                v-reveal
                 eyebrow="Tableau de bord"
                 :title="`Bonjour, ${firstName} 👋`"
                 description="Voici un aperçu de votre activité et des opportunités qui vous attendent aujourd’hui."
@@ -169,7 +233,7 @@ const profileChecklist = [
                 </template>
             </PageHeader>
 
-            <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div v-reveal="60" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <StatCard
                     v-for="stat in stats"
                     :key="stat.label"
@@ -183,7 +247,7 @@ const profileChecklist = [
                 />
             </div>
 
-            <Card v-if="profiles.length > 0">
+            <Card v-if="profiles.length > 0" v-reveal="120">
                 <CardHeader class="flex-row items-start justify-between gap-3 space-y-0">
                     <div>
                         <CardTitle class="text-base">Mes profils professionnels</CardTitle>
@@ -211,7 +275,7 @@ const profileChecklist = [
                 </CardContent>
             </Card>
 
-            <div class="space-y-4">
+            <div v-reveal="180" class="space-y-4">
                 <Card class="min-w-0 overflow-hidden">
                     <CardHeader class="flex-row items-start justify-between gap-3 space-y-0">
                         <div>
@@ -273,11 +337,14 @@ const profileChecklist = [
                 </Card>
 
                 <div class="grid gap-4 md:grid-cols-2">
-                    <Card>
+                    <Card v-if="profileCompleteness">
                         <CardHeader class="pb-3">
                             <div class="flex items-center justify-between gap-3">
                                 <CardTitle class="text-base">Profil professionnel</CardTitle>
-                                <StatusBadge tone="warning" label="80 %" />
+                                <StatusBadge
+                                    :tone="profileCompleteness.percentage === 100 ? 'success' : 'warning'"
+                                    :label="`${profileCompleteness.percentage} %`"
+                                />
                             </div>
                             <CardDescription>Un profil complet inspire davantage confiance.</CardDescription>
                         </CardHeader>
@@ -285,16 +352,19 @@ const profileChecklist = [
                             <div
                                 class="h-2 overflow-hidden rounded-full bg-muted"
                                 role="progressbar"
-                                aria-valuenow="80"
+                                :aria-valuenow="profileCompleteness.percentage"
                                 aria-valuemin="0"
                                 aria-valuemax="100"
-                                aria-label="Profil complété à 80 %"
+                                :aria-label="`Profil complété à ${profileCompleteness.percentage} %`"
                             >
-                                <div class="h-full w-[80%] rounded-full bg-brand-600" />
+                                <div
+                                    class="h-full rounded-full bg-brand-600 transition-[width] duration-500"
+                                    :style="{ width: `${profileCompleteness.percentage}%` }"
+                                />
                             </div>
 
                             <ul class="mt-4 space-y-2.5">
-                                <li v-for="item in profileChecklist" :key="item.label" class="flex items-center gap-2.5 text-sm">
+                                <li v-for="item in profileCompleteness.items" :key="item.label" class="flex items-center gap-2.5 text-sm">
                                     <CheckCircle2 v-if="item.complete" class="size-4 shrink-0 text-success" aria-hidden="true" />
                                     <Circle v-else class="size-4 shrink-0 text-border" aria-hidden="true" />
                                     <span :class="item.complete ? 'text-muted-foreground' : 'font-medium text-foreground'">{{ item.label }}</span>
@@ -303,8 +373,8 @@ const profileChecklist = [
                             </ul>
 
                             <Button as-child variant="soft" class="mt-4 w-full justify-between">
-                                <Link :href="route('profile.edit')">
-                                    Compléter mon profil
+                                <Link :href="profileCompletionHref">
+                                    {{ profileCompleteness.percentage === 100 ? 'Voir mon profil' : 'Compléter mon profil' }}
                                     <ArrowRight class="size-4" aria-hidden="true" />
                                 </Link>
                             </Button>
@@ -318,50 +388,34 @@ const profileChecklist = [
                         </CardHeader>
                         <CardContent>
                             <div
+                                v-if="activities.length > 0"
                                 class="relative space-y-4 before:absolute before:bottom-2 before:left-[15px] before:top-2 before:w-px before:bg-border"
                             >
-                                <div class="relative flex gap-3">
+                                <div v-for="activity in activities" :key="activity.id" class="relative flex gap-3">
                                     <span
-                                        class="relative z-10 flex size-8 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-600 ring-4 ring-card dark:bg-brand-950/70 dark:text-brand-300"
+                                        class="relative z-10 flex size-8 shrink-0 items-center justify-center rounded-full ring-4 ring-card"
+                                        :class="activity.toneClass"
                                     >
-                                        <Inbox class="size-3.5" aria-hidden="true" />
+                                        <component :is="activity.iconComponent" class="size-3.5" aria-hidden="true" />
                                     </span>
                                     <div class="min-w-0 pt-0.5">
-                                        <p class="text-xs font-medium leading-snug text-foreground">Nouvelle demande d’Aïssata Keïta</p>
-                                        <p class="mt-0.5 text-[11px] text-muted-foreground">Réparation de fuite · Il y a 12 min</p>
+                                        <p class="text-xs font-medium leading-snug text-foreground">{{ activity.title }}</p>
+                                        <p class="mt-0.5 text-[11px] text-muted-foreground">
+                                            {{ activity.description }} · {{ activity.timeLabel }}
+                                        </p>
                                     </div>
                                 </div>
-
-                                <div class="relative flex gap-3">
-                                    <span
-                                        class="relative z-10 flex size-8 shrink-0 items-center justify-center rounded-full bg-info/10 text-info ring-4 ring-card"
-                                    >
-                                        <MessageSquare class="size-3.5" aria-hidden="true" />
-                                    </span>
-                                    <div class="min-w-0 pt-0.5">
-                                        <p class="text-xs font-medium leading-snug text-foreground">Nouveau message d’un client</p>
-                                        <p class="mt-0.5 text-[11px] text-muted-foreground">Mamadou Sissoko · Il y a 3 h</p>
-                                    </div>
-                                </div>
-
-                                <div class="relative flex gap-3">
-                                    <span
-                                        class="relative z-10 flex size-8 shrink-0 items-center justify-center rounded-full bg-info/10 text-info ring-4 ring-card"
-                                    >
-                                        <Eye class="size-3.5" aria-hidden="true" />
-                                    </span>
-                                    <div class="min-w-0 pt-0.5">
-                                        <p class="text-xs font-medium leading-snug text-foreground">Votre profil a été consulté 42 fois</p>
-                                        <p class="mt-0.5 text-[11px] text-muted-foreground">Aujourd’hui · +18 % vs hier</p>
-                                    </div>
-                                </div>
+                            </div>
+                            <div v-else class="rounded-xl border border-dashed border-border bg-muted/20 px-4 py-8 text-center">
+                                <p class="text-sm font-medium text-foreground">Aucune activité récente</p>
+                                <p class="mt-1 text-xs text-muted-foreground">Les demandes, réservations et avis liés à votre compte apparaîtront ici.</p>
                             </div>
                         </CardContent>
                     </Card>
                 </div>
             </div>
 
-            <div class="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+            <div v-reveal="240" class="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
                 <Card>
                     <CardHeader class="flex-row items-start justify-between gap-3 space-y-0">
                         <div>

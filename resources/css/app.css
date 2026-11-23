@@ -57,6 +57,11 @@
 
         --radius: 0.875rem;
 
+        /* Courbes d'accélération signature : plus franches que les easings natifs. */
+        --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+        --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+        --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
         --sidebar-background: 40 33% 99%;
         --sidebar-foreground: 165 20% 22%;
         --sidebar-primary: 158 74% 24%;
@@ -208,6 +213,50 @@
         @apply border-border/70 bg-background/80 backdrop-blur-xl backdrop-saturate-150;
     }
 
+    /* Révélation au défilement.
+       La classe `reveal` est posée par le JS uniquement : sans script,
+       le contenu reste immédiatement lisible. */
+    .reveal {
+        opacity: 0;
+        transform: translate3d(0, 10px, 0);
+        transition:
+            opacity 0.9s var(--ease-out),
+            transform 0.9s var(--ease-out);
+        transition-delay: var(--reveal-delay, 0ms);
+    }
+
+    .reveal.is-revealed {
+        opacity: 1;
+        transform: none;
+    }
+
+    /* Élévation douce des cartes interactives (souris uniquement). */
+    .lift {
+        transition:
+            transform 0.5s var(--ease-out),
+            box-shadow 0.5s var(--ease-out),
+            border-color 0.5s var(--ease-out);
+    }
+
+    .lift-icon,
+    .lift-arrow {
+        transition: transform 0.5s var(--ease-out);
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+        .lift:hover {
+            transform: translateY(-4px);
+        }
+
+        .lift:hover .lift-icon {
+            transform: translateY(-1px) rotate(-6deg) scale(1.05);
+        }
+
+        .lift:hover .lift-arrow {
+            transform: translateX(4px);
+        }
+    }
+
     .no-scrollbar {
         scrollbar-width: none;
     }
@@ -242,19 +291,114 @@
         text-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
     }
 
-    /* Respecte la préférence système de réduction des animations. */
-    @media (prefers-reduced-motion: reduce) {
-        html {
-            scroll-behavior: auto;
-        }
+    /* Accent de titre : couleur unie de la marque (pas de dégradé). */
 
-        *,
-        *::before,
-        *::after {
-            animation-duration: 0.01ms !important;
-            animation-iteration-count: 1 !important;
-            scroll-behavior: auto !important;
-            transition-duration: 0.01ms !important;
+    /* Halo doux et uni derrière les compositions du héro (pas de dégradé). */
+    .hero-mesh {
+        background-color: hsl(var(--primary) / 0.06);
+    }
+
+    /* Trame de points discrète (pas de dégradé) — désactivée par défaut. */
+    .dot-grid {
+        background-color: hsl(var(--foreground) / 0.04);
+    }
+
+    /* Arche inspirée de l'architecture sahélienne. */
+    .arch-frame {
+        border-radius: 999px 999px 2rem 2rem;
+    }
+
+    .ring-hairline {
+        box-shadow: inset 0 0 0 1px hsl(var(--border) / 0.7);
+    }
+
+    /* Pulse de bordure unique pour la carte mise en avant. */
+    @keyframes border-pulse {
+        0% {
+            box-shadow: 0 0 0 0 hsl(var(--primary) / 0.45);
         }
+        100% {
+            box-shadow: 0 0 0 10px hsl(var(--primary) / 0);
+        }
+    }
+
+    .is-revealed .plan-featured {
+        animation: border-pulse 1.2s var(--ease-out) 0.15s 1;
+    }
+    .is-revealed .step-connector {
+        width: 100%;
+    }
+
+    /* Icônes des étapes : scale-in au reveal. */
+    .step-icon {
+        transform: scale(0.82);
+        transition: transform 0.6s var(--ease-out) 0.18s;
+    }
+
+    .is-revealed .step-icon {
+        transform: scale(1);
+    }
+    /* Trait court qui s'allonge (eyebrow). */
+    @keyframes line-draw {
+        from {
+            transform: scaleX(0);
+        }
+        to {
+            transform: scaleX(1);
+        }
+    }
+
+    .animate-line-draw {
+        transform-origin: left;
+        animation: line-draw 0.6s var(--ease-out) 0.1s both;
+    }
+    @keyframes underline-draw {
+        from {
+            width: 0;
+        }
+        to {
+            width: 100%;
+        }
+    }
+
+    .animate-underline-draw {
+        animation: underline-draw 0.9s var(--ease-out) 0.6s both;
+    }
+
+    /* Entrée échelonnée des enfants d'un conteneur (formulaires). */
+    .stagger-children > * {
+        opacity: 0;
+        animation: fade-up 0.9s var(--ease-out) both;
+    }
+
+    .stagger-children > *:nth-child(1) { animation-delay: 0.10s; }
+    .stagger-children > *:nth-child(2) { animation-delay: 0.18s; }
+    .stagger-children > *:nth-child(3) { animation-delay: 0.26s; }
+    .stagger-children > *:nth-child(4) { animation-delay: 0.34s; }
+    .stagger-children > *:nth-child(5) { animation-delay: 0.42s; }
+    .stagger-children > *:nth-child(6) { animation-delay: 0.50s; }
+    .stagger-children > *:nth-child(7) { animation-delay: 0.58s; }
+    .stagger-children > *:nth-child(8) { animation-delay: 0.66s; }
+
+    .press {
+        transition: transform 200ms var(--ease-out);
+    }
+
+    .press:active {
+        transform: scale(0.97);
+    }
+
+    /* Base typographique : texte principal en gras, titres encore plus marqués. */
+    body {
+        font-weight: 700;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        font-weight: 800;
     }
 }

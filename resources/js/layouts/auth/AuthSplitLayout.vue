@@ -2,7 +2,7 @@
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import ThemeToggle from '@/components/ThemeToggle.vue';
 import { Link } from '@inertiajs/vue3';
-import { BadgeCheck, CheckCircle2, ShieldCheck, Sparkles } from 'lucide-vue-next';
+import { ArrowLeft, BadgeCheck, CheckCircle2, ShieldCheck, Sparkles } from 'lucide-vue-next';
 
 defineProps<{
     title?: string;
@@ -31,25 +31,33 @@ const benefits = [
                 <span class="font-display text-lg font-semibold tracking-tight"> Mali<span class="text-gold-300">Connect</span> </span>
             </Link>
 
+            <div class="pointer-events-none absolute -bottom-12 -right-6 select-none font-display text-[260px] font-bold leading-none text-white/[0.04]" aria-hidden="true">
+                M
+            </div>
+
             <div class="relative z-10 my-auto max-w-lg py-16">
-                <p class="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-gold-300">
-                    <span class="bg-gold-00/80 h-px w-6" aria-hidden="true" />
+                <p class="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-gold-300 animate-fade-up">
+                    <span class="block h-px w-6 origin-left bg-gold-300/80 animate-line-draw" aria-hidden="true" />
                     La confiance, à portée de main
                 </p>
 
-                <h2 class="mt-6 font-display text-4xl font-semibold leading-[1.12] tracking-tight xl:text-[44px]">
+                <h2 class="mt-6 font-display text-4xl font-semibold leading-[1.12] tracking-tight animate-fade-up xl:text-[44px]" style="animation-delay: 120ms">
                     Le bon professionnel,<br />
                     <span class="text-gold-300">au bon moment.</span>
                 </h2>
 
-                <p class="mt-5 max-w-md text-[15px] leading-relaxed text-brand-100/85">
+                <p class="mt-5 max-w-md text-[15px] leading-relaxed text-brand-100/85 animate-fade-up" style="animation-delay: 200ms">
                     MaliConnect prépare une nouvelle façon de trouver et de contacter les professionnels de confiance, partout au Mali. Une expérience
                     simple, humaine et pensée pour le quotidien.
                 </p>
 
-                <ul class="mt-8 space-y-3.5">
-                    <li v-for="benefit in benefits" :key="benefit.label" class="flex items-center gap-3 text-sm text-brand-50/90">
-                        <span class="flex size-7 shrink-0 items-center justify-center rounded-full bg-white/10 ring-1 ring-inset ring-white/15">
+                <ul class="mt-8 space-y-3.5 animate-fade-up" style="animation-delay: 280ms">
+                    <li
+                        v-for="benefit in benefits"
+                        :key="benefit.label"
+                        class="group flex items-center gap-3 text-sm text-brand-50/90 transition-transform duration-300 hover:translate-x-1"
+                    >
+                        <span class="flex size-7 shrink-0 items-center justify-center rounded-full bg-white/10 ring-1 ring-inset ring-white/15 transition-transform duration-300 group-hover:scale-110">
                             <component :is="benefit.icon" class="size-3.5 text-gold-300" aria-hidden="true" />
                         </span>
                         {{ benefit.label }}
@@ -57,31 +65,38 @@ const benefits = [
                 </ul>
             </div>
 
-            <div class="relative z-10 rounded-2xl border border-white/10 bg-white/[0.06] p-5">
+            <div class="relative z-10 rounded-2xl border border-white/10 bg-white/[0.06] p-5 animate-fade-up" style="animation-delay: 400ms">
                 <p class="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-gold-300">
                     <Sparkles class="size-3.5" aria-hidden="true" />
-                    Projet en cours de développement
+                    Pourquoi nous rejoindre
                 </p>
-                <p class="mt-3 text-sm leading-relaxed text-brand-50/90">
-                    MaliConnect avance par étapes. Créez votre compte dès maintenant et découvrez l’aperçu de l’espace professionnel.
-                </p>
+                <ul class="mt-3 space-y-2.5 text-sm text-brand-50/90">
+                    <li v-for="benefit in benefits" :key="benefit.label" class="flex items-center gap-2.5">
+                        <CheckCircle2 class="size-3.5 shrink-0 text-gold-300" aria-hidden="true" />
+                        {{ benefit.label }}
+                    </li>
+                </ul>
                 <div class="mt-4 flex items-center gap-2 text-[11px] text-brand-200/80">
                     <CheckCircle2 class="size-3.5 shrink-0 text-gold-300" aria-hidden="true" />
-                    Inscription gratuite · Aucune fonctionnalité payante active
+                    Inscription gratuite · Aucune carte bancaire requise
                 </div>
             </div>
         </aside>
 
         <!-- Panneau de formulaire. -->
         <main class="relative flex min-h-svh flex-col">
-            <header class="relative z-10 flex items-center justify-end gap-4 px-5 py-5 sm:px-8 lg:px-10">
+            <header class="relative z-10 flex items-center justify-between gap-4 px-5 py-5 sm:px-8 lg:px-10">
+                <Link :href="route('home')" class="flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground lg:hidden">
+                    <ArrowLeft class="size-4" aria-hidden="true" />
+                    Accueil
+                </Link>
                 <div class="flex items-center gap-1">
                     <ThemeToggle />
                 </div>
             </header>
 
             <div class="relative z-10 flex flex-1 items-center justify-center px-5 pb-12 pt-4 sm:px-8 lg:px-10">
-                <div class="w-full max-w-[420px]">
+                <div class="w-full max-w-[420px] rounded-2xl border border-border/70 bg-card p-6 shadow-soft animate-fade-up lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none" style="animation-delay: 160ms">
                     <div class="mb-8">
                         <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-brand-600 dark:text-brand-400">Espace sécurisé</p>
                         <h1 v-if="title" class="mt-2 font-display text-2xl font-semibold tracking-tight text-foreground sm:text-[28px]">

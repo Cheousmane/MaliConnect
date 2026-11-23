@@ -163,9 +163,9 @@ class DashboardController extends Controller
                 ],
                 [
                     'key' => 'active_subscriptions',
-                    'label' => 'Abonnements actifs',
-                    'value' => Subscription::query()->active()->count(),
-                    'description' => 'Abonnements en cours de validité.',
+                    'label' => 'Abonnements avec accès',
+                    'value' => Subscription::query()->grantingAccess()->count(),
+                    'description' => 'Abonnements actifs ou en essai gratuit.',
                     'tone' => 'success',
                 ],
                 [

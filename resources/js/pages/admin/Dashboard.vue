@@ -160,9 +160,8 @@ const pendingTotal = computed(() => props.pending.profiles + props.pending.busin
 
     <AdminLayout :breadcrumbs="breadcrumbs">
         <div class="space-y-6">
-            <PageHeader
-                eyebrow="Administration"
-                title="Vue d’ensemble"
+            <PageHeader v-reveal
+                title="Tableau de bord"
                 description="Indicateurs réels de la plateforme : activité, abonnements et revenus encaissés."
             >
                 <template #actions>
@@ -188,7 +187,7 @@ const pendingTotal = computed(() => props.pending.profiles + props.pending.busin
                 </template>
             </PageHeader>
 
-            <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <div v-reveal="60" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 <StatCard
                     v-for="metric in metrics"
                     :key="metric.key"
@@ -200,7 +199,7 @@ const pendingTotal = computed(() => props.pending.profiles + props.pending.busin
                 />
             </div>
 
-            <div class="grid gap-4 lg:grid-cols-3">
+            <div v-reveal="120" class="grid gap-4 lg:grid-cols-3">
                 <Card class="lg:col-span-2">
                     <CardHeader class="flex flex-row items-start justify-between gap-4">
                         <div>
@@ -310,7 +309,7 @@ const pendingTotal = computed(() => props.pending.profiles + props.pending.busin
                 </Card>
             </div>
 
-            <div class="grid gap-4 lg:grid-cols-3">
+            <div v-reveal="180" class="grid gap-4 lg:grid-cols-3">
                 <Card>
                     <CardHeader>
                         <CardTitle class="text-base">File de vérification</CardTitle>
@@ -388,7 +387,7 @@ const pendingTotal = computed(() => props.pending.profiles + props.pending.busin
                 </Card>
             </div>
 
-            <div class="grid gap-4 lg:grid-cols-2">
+            <div v-reveal="240" class="grid gap-4 lg:grid-cols-2">
                 <Card>
                     <CardHeader>
                         <CardTitle class="text-base">Dernières demandes</CardTitle>
@@ -452,7 +451,7 @@ const pendingTotal = computed(() => props.pending.profiles + props.pending.busin
                 </Card>
             </div>
 
-            <Card>
+            <Card v-reveal="300">
                 <CardHeader>
                     <CardTitle class="text-base">Journal récent</CardTitle>
                     <CardDescription>Huit dernières actions sensibles réalisées dans l’administration.</CardDescription>

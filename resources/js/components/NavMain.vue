@@ -10,11 +10,13 @@ defineProps<{
 const page = usePage<SharedData>();
 
 function isActive(href: string): boolean {
-    if (href === '/dashboard') {
-        return page.url === href;
+    const current = page.url.split('?')[0].split('#')[0];
+
+    if (href === '/dashboard' || href === '/admin') {
+        return current === href;
     }
 
-    return page.url === href || page.url.startsWith(`${href}/`);
+    return current === href || current.startsWith(`${href}/`);
 }
 </script>
 
@@ -30,10 +32,10 @@ function isActive(href: string): boolean {
                     :tooltip="item.title"
                     :is-active="isActive(item.href)"
                     :class="[
-                        'h-10 rounded-lg px-3 text-[13px] text-sidebar-foreground/75 transition-all duration-200',
+                        'relative h-10 rounded-lg px-3 text-[13px] text-sidebar-foreground/75 transition-all duration-200',
                         item.disabled
                             ? 'cursor-not-allowed opacity-55 hover:bg-transparent hover:text-sidebar-foreground/75'
-                            : 'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[active=true]:bg-brand-50 data-[active=true]:font-semibold data-[active=true]:text-brand-800 data-[active=true]:ring-1 data-[active=true]:ring-inset data-[active=true]:ring-brand-100 dark:data-[active=true]:bg-brand-950/60 dark:data-[active=true]:text-brand-200 dark:data-[active=true]:ring-brand-900',
+                            : 'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[active=true]:bg-brand-50 data-[active=true]:font-semibold data-[active=true]:text-brand-800 data-[active=true]:ring-1 data-[active=true]:ring-inset data-[active=true]:ring-brand-100 data-[active=true]:before:absolute data-[active=true]:before:left-1 data-[active=true]:before:top-1/2 data-[active=true]:before:h-5 data-[active=true]:before:w-[3px] data-[active=true]:before:-translate-y-1/2 data-[active=true]:before:rounded-full data-[active=true]:before:bg-brand-600 dark:data-[active=true]:bg-brand-950/60 dark:data-[active=true]:text-brand-200 dark:data-[active=true]:ring-brand-900 dark:data-[active=true]:before:bg-brand-400',
                     ]"
                     as-child
                 >

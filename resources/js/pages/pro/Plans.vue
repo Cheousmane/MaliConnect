@@ -49,6 +49,7 @@ type PlanPayload = {
     unlimited_services: boolean;
     unlimited_pricing_sheets: boolean;
     trial_days: number;
+    trial_eligible: boolean;
     is_free: boolean;
     is_current: boolean;
     is_upgrade: boolean;
@@ -92,6 +93,7 @@ const changeOwner = () => {
 
 const subscribeOpen = ref(false);
 const selectedPlan = ref<PlanPayload | null>(null);
+const trialMode = computed(() => selectedPlan.value?.trial_eligible === true);
 
 const subscribeForm = useForm({
     owner_type: props.selectedOwner?.type ?? 'profile',
@@ -109,6 +111,8 @@ const openSubscribe = (plan: PlanPayload) => {
     subscribeForm.plan_id = plan.id;
     subscribeForm.owner_type = selectedOwner?.value?.type ?? 'profile';
     subscribeForm.owner_id = selectedOwner?.value?.id ?? 0;
+    subscribeForm.external_reference = '';
+    subscribeForm.proof = null;
     subscribeOpen.value = true;
 };
 
@@ -116,10 +120,6 @@ const submitSubscribe = () => {
     subscribeForm.post(route('pro.subscription.subscribe'), {
         forceFormData: true,
         preserveScroll: true,
-        onError: (errors) => {
-            console.error('Subscribe errors:', errors);
-            alert('Erreur: ' + Object.values(errors).join(', '));
-        },
         onSuccess: () => {
             subscribeOpen.value = false;
         },
@@ -179,6 +179,9 @@ const requestFree = () => {
                                 {{ plan.is_free ? '0' : plan.formatted_monthly.replace(' FCFA', '') }}
                             </p>
                             <p class="text-xs text-muted-foreground">par mois</p>
+                            <p v-if="plan.trial_eligible" class="mt-1 text-xs font-medium text-success">
+                                {{ plan.trial_days }} jours d'essai gratuit
+                            </p>
                         </div>
                     </div>
 
@@ -219,7 +222,7 @@ const requestFree = () => {
                             Formule actuelle
                         </div>
                         <Button v-else-if="!plan.is_free" variant="brand" size="sm" class="h-11 w-full" @click="openSubscribe(plan)">
-                            {{ plan.is_upgrade ? 'Passer à cette formule' : 'Choisir cette formule' }}
+                            {{ plan.trial_eligible ? "Démarrer l'essai gratuit" : plan.is_upgrade ? 'Passer à cette formule' : 'Choisir cette formule' }}
                             <ArrowRight class="size-4" aria-hidden="true" />
                         </Button>
                         <Button v-else variant="outline" size="sm" class="h-11 w-full" @click="requestFree"> Retour à FREE </Button>
@@ -228,17 +231,33 @@ const requestFree = () => {
             </div>
 
             <p class="text-center text-sm text-muted-foreground">
-                Aucun engagement. Vous pouvez changer de formule à tout moment. Les formules payantes incluent un essai gratuit de 30 jours.
+                Aucun engagement. Vous pouvez changer de formule à tout moment. Les formules payantes incluent un essai gratuit de 14 jours.
             </p>
 
             <Dialog v-model:open="subscribeOpen">
                 <DialogScrollContent class="max-w-lg">
-                    <DialogTitle>Souscrire à {{ selectedPlan?.name }}</DialogTitle>
+                    <DialogTitle>
+                        {{ trialMode ? `Démarrer l'essai gratuit ${selectedPlan?.name}` : `Souscrire à ${selectedPlan?.name}` }}
+                    </DialogTitle>
                     <DialogDescription>
-                        {{ props.paymentInstructions }}
+                        {{
+                            trialMode
+                                ? `Essai gratuit de ${selectedPlan?.trial_days} jours, sans paiement. Vous pourrez régler votre abonnement avant la fin de l'essai.`
+                                : props.paymentInstructions
+                        }}
                     </DialogDescription>
 
                     <form class="grid gap-4" @submit.prevent="submitSubscribe">
+                        <div
+                            v-if="trialMode"
+                            class="rounded-xl border border-success/30 bg-success/5 p-3 text-sm text-foreground"
+                        >
+                            <p class="font-medium">Aucun paiement requis aujourd'hui.</p>
+                            <p class="mt-1 text-xs text-muted-foreground">
+                                Votre formule {{ selectedPlan?.name }} est active pendant {{ selectedPlan?.trial_days }} jours. Vous serez invité à déposer une preuve de paiement avant la fin de l'essai pour continuer.
+                            </p>
+                        </div>
+
                         <div class="grid gap-1.5">
                             <Label for="billing_cycle">Périodicité</Label>
                             <select
@@ -250,33 +269,35 @@ const requestFree = () => {
                             </select>
                         </div>
 
-                        <div class="grid gap-1.5">
-                            <Label for="method">Moyen de paiement</Label>
-                            <select
-                                id="method"
-                                v-model="subscribeForm.method"
-                                class="h-11 w-full rounded-lg border border-input bg-background px-3.5 text-sm text-foreground"
-                            >
-                                <option v-for="m in props.paymentMethods" :key="m.value" :value="m.value">{{ m.label }}</option>
-                            </select>
-                        </div>
+                        <template v-if="!trialMode">
+                            <div class="grid gap-1.5">
+                                <Label for="method">Moyen de paiement</Label>
+                                <select
+                                    id="method"
+                                    v-model="subscribeForm.method"
+                                    class="h-11 w-full rounded-lg border border-input bg-background px-3.5 text-sm text-foreground"
+                                >
+                                    <option v-for="m in props.paymentMethods" :key="m.value" :value="m.value">{{ m.label }}</option>
+                                </select>
+                            </div>
 
-                        <div class="grid gap-1.5">
-                            <Label for="external_reference">Référence de transaction</Label>
-                            <Input id="external_reference" v-model="subscribeForm.external_reference" placeholder="Ex: OM-123456" />
-                            <p v-if="subscribeForm.errors.external_reference" class="text-xs text-destructive">
-                                {{ subscribeForm.errors.external_reference }}
-                            </p>
-                        </div>
+                            <div class="grid gap-1.5">
+                                <Label for="external_reference">Référence de transaction</Label>
+                                <Input id="external_reference" v-model="subscribeForm.external_reference" placeholder="Ex: OM-123456" />
+                                <p v-if="subscribeForm.errors.external_reference" class="text-xs text-destructive">
+                                    {{ subscribeForm.errors.external_reference }}
+                                </p>
+                            </div>
 
-                        <div class="grid gap-1.5">
-                            <Label for="proof">Preuve de paiement</Label>
-                            <p class="text-xs text-muted-foreground">
-                                Requise pour les changements de formule. Optionnelle pour l'essai gratuit de 30 jours.
-                            </p>
-                            <Input id="proof" type="file" @change="subscribeForm.proof = ($event.target as HTMLInputElement).files?.[0] ?? null" />
-                            <p v-if="subscribeForm.errors.proof" class="text-xs text-destructive">{{ subscribeForm.errors.proof }}</p>
-                        </div>
+                            <div class="grid gap-1.5">
+                                <Label for="proof">Preuve de paiement</Label>
+                                <p class="text-xs text-muted-foreground">
+                                    Joignez une capture ou un reçu lisible pour vérification par l'administration.
+                                </p>
+                                <Input id="proof" type="file" @change="subscribeForm.proof = ($event.target as HTMLInputElement).files?.[0] ?? null" />
+                                <p v-if="subscribeForm.errors.proof" class="text-xs text-destructive">{{ subscribeForm.errors.proof }}</p>
+                            </div>
+                        </template>
 
                         <div class="grid gap-1.5">
                             <Label for="notes">Notes (facultatif)</Label>
@@ -286,7 +307,7 @@ const requestFree = () => {
                         <DialogFooter class="gap-2">
                             <Button type="button" variant="outline" @click="subscribeOpen = false">Annuler</Button>
                             <Button type="submit" variant="brand" :disabled="subscribeForm.processing">
-                                {{ subscribeForm.processing ? 'Envoi…' : 'Souscrire' }}
+                                {{ subscribeForm.processing ? 'Envoi…' : trialMode ? "Démarrer l'essai" : 'Souscrire' }}
                             </Button>
                         </DialogFooter>
                     </form>

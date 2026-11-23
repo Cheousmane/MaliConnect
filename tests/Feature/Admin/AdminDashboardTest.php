@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\PaymentStatus;
+use App\Enums\SubscriptionStatus;
 use App\Models\Business;
 use App\Models\Payment;
 use App\Models\ProviderBooking;
@@ -66,5 +67,22 @@ test('les indicateurs reflètent uniquement les données réelles', function () 
         ->where('revenue.total', 15000)
         ->where('metrics.7.value', 1)
         ->where('metrics.8.value', 15000),
+    );
+});
+
+test('le tableau de bord distingue les abonnements en essai des abonnements payants', function () {
+    $admin = dashboardAdmin();
+
+    Subscription::factory()->active()->create();
+    Subscription::factory()->create([
+        'status' => SubscriptionStatus::Trialing,
+        'trial_ends_at' => now()->addDays(30),
+        'ends_at' => null,
+    ]);
+
+    $this->actingAs($admin)->get('/admin')->assertInertia(fn ($page) => $page
+        ->where('subscriptions.active', 1)
+        ->where('subscriptions.trialing', 1)
+        ->where('subscriptions.with_access', 2),
     );
 });

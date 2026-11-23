@@ -85,16 +85,18 @@ class SubscriptionController extends Controller
         $subscription = $owner !== null ? $this->subscriptionFor($owner) : null;
         $effectivePlan = $this->effectivePlan($owner);
         $currentSortOrder = $effectivePlan->sort_order;
+        $trialAvailable = $owner !== null && $this->subscriptions->isTrialAvailable($owner);
 
         $plans = Plan::query()
             ->active()
             ->ordered()
             ->get()
-            ->map(function (Plan $plan) use ($effectivePlan, $currentSortOrder) {
+            ->map(function (Plan $plan) use ($effectivePlan, $currentSortOrder, $trialAvailable) {
                 $payload = $this->entitlements->planPayload($plan);
 
                 return [
                     ...$payload,
+                    'trial_eligible' => $trialAvailable && $plan->trial_days > 0,
                     'is_current' => (int) $plan->id === (int) $effectivePlan->id,
                     'is_upgrade' => $plan->sort_order > $currentSortOrder,
                     'is_downgrade' => $plan->sort_order < $currentSortOrder,
@@ -137,16 +139,17 @@ class SubscriptionController extends Controller
             ->whereKey($validated['plan_id'])
             ->firstOrFail();
 
-        $hasTrial = $plan->trial_days > 0;
-        $existingSubscription = $owner instanceof \App\Models\Business
-            ? \App\Models\Subscription::query()->where('business_id', $owner->id)->first()
-            : \App\Models\Subscription::query()->where('provider_profile_id', $owner->id)->whereNull('business_id')->first();
-
-        // Preuve requise si : pas d'essai OU abonnement existant (changement de formule)
-        $needsProof = ! $hasTrial || $existingSubscription !== null;
+        // L'essai gratuit n'est proposé qu'une seule fois, y compris pour un
+        // profil qui possède déjà l'abonnement FREE automatique. Au-delà, une
+        // preuve de paiement est obligatoire.
+        $needsProof = ! $this->subscriptions->canStartTrial($owner, $plan);
 
         if ($needsProof && ! $request->hasFile('proof')) {
             return back()->withErrors(['proof' => 'Une preuve de paiement est requise pour cette souscription.'])->withInput();
+        }
+
+        if ($needsProof && blank($validated['external_reference'] ?? null)) {
+            return back()->withErrors(['external_reference' => 'Indiquez la référence de votre transaction.'])->withInput();
         }
 
         $payment = $this->subscriptions->requestPaidPlan(
@@ -154,7 +157,7 @@ class SubscriptionController extends Controller
             $plan,
             BillingCycle::from($validated['billing_cycle']),
             PaymentMethod::from($validated['method']),
-            $validated['external_reference'],
+            $validated['external_reference'] ?? null,
             $request->file('proof'),
             $request->user(),
             $validated['notes'] ?? null,

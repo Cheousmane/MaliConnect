@@ -77,7 +77,7 @@ const submit = () => {
             </Button>
         </div>
 
-        <form v-if="!isAuthenticated" class="space-y-4" @submit.prevent="submit">
+        <form v-if="!isAuthenticated" class="space-y-4 stagger-children" @submit.prevent="submit">
             <FormField
                 label="Adresse e-mail"
                 for="email"
@@ -102,7 +102,7 @@ const submit = () => {
             </Button>
         </form>
 
-        <form v-else class="space-y-3" @submit.prevent="submit">
+        <form v-else class="space-y-3 stagger-children" @submit.prevent="submit">
             <Button type="submit" variant="brand" size="lg" class="w-full" :disabled="form.processing">
                 <LoaderCircle v-if="form.processing" class="size-4 animate-spin" aria-hidden="true" />
                 Renvoyer l’e-mail de vérification

@@ -138,7 +138,7 @@ export default {
                     to: { opacity: '1' },
                 },
                 'fade-up': {
-                    from: { opacity: '0', transform: 'translateY(12px)' },
+                    from: { opacity: '0', transform: 'translateY(8px)' },
                     to: { opacity: '1', transform: 'translateY(0)' },
                 },
                 'scale-in': {
@@ -156,10 +156,10 @@ export default {
             },
             animation: {
                 'fade-in': 'fade-in 0.5s ease-out both',
-                'fade-up': 'fade-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) both',
+                'fade-up': 'fade-up 0.9s cubic-bezier(0.16, 1, 0.3, 1) both',
                 'scale-in': 'scale-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both',
-                float: 'float 6s ease-in-out infinite',
-                'pulse-ring': 'pulse-ring 2.4s cubic-bezier(0.24, 0, 0.38, 1) infinite',
+                float: 'float 8s ease-in-out infinite',
+                'pulse-ring': 'pulse-ring 3s cubic-bezier(0.24, 0, 0.38, 1) infinite',
             },
             transitionTimingFunction: {
                 smooth: 'cubic-bezier(0.16, 1, 0.3, 1)',

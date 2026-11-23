@@ -57,6 +57,10 @@ class AuthenticatedSessionController extends Controller
             $user->forceFill(['last_login_at' => now()])->save();
         }
 
+        if ($user instanceof User && $user->hasAdminAccess()) {
+            return redirect()->intended(route('admin.dashboard', absolute: false));
+        }
+
         return redirect()->intended(route('dashboard', absolute: false));
     }
 

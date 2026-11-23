@@ -36,7 +36,7 @@ const submit = () => {
     <AuthLayout title="Nouveau mot de passe" description="Choisissez un mot de passe solide pour sécuriser votre compte.">
         <Head title="Réinitialiser le mot de passe" />
 
-        <form @submit.prevent="submit" class="space-y-4">
+        <form @submit.prevent="submit" class="space-y-4 stagger-children">
             <FormField label="Adresse e-mail" for="email" :error="form.errors.email">
                 <Input id="email" type="email" name="email" autocomplete="email" v-model="form.email" readonly class="bg-muted/40" />
             </FormField>
@@ -91,7 +91,7 @@ const submit = () => {
                 </div>
             </FormField>
 
-            <Button type="submit" variant="brand" size="lg" class="mt-2 w-full" :disabled="form.processing">
+            <Button type="submit" variant="brand" size="lg" class="mt-2 w-full press" :disabled="form.processing">
                 <LoaderCircle v-if="form.processing" class="size-4 animate-spin" aria-hidden="true" />
                 Réinitialiser le mot de passe
             </Button>

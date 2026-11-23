@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import FormField from '@/components/FormField.vue';
+import LocationMap from '@/components/LocationMap.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import PhoneInput from '@/components/PhoneInput.vue';
 import StatusBadge from '@/components/StatusBadge.vue';
@@ -452,6 +453,15 @@ const removeAvailability = (index: number) => {
                                 <Input id="quartier" v-model="form.quartier" maxlength="100" />
                             </FormField>
                         </div>
+
+                        <LocationMap
+                            :latitude="form.latitude ? Number(form.latitude) : null"
+                            :longitude="form.longitude ? Number(form.longitude) : null"
+                            interactive
+                            height="300px"
+                            @update:latitude="form.latitude = String($event)"
+                            @update:longitude="form.longitude = String($event)"
+                        />
 
                         <div class="grid gap-4 sm:grid-cols-2">
                             <FormField label="Latitude" for="latitude" :error="form.errors.latitude">

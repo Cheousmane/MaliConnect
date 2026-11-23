@@ -33,7 +33,7 @@ class SubscribePlanRequest extends FormRequest
             'plan_id' => ['required', 'integer', Rule::exists('plans', 'id')],
             'billing_cycle' => ['required', 'string', Rule::enum(BillingCycle::class)],
             'method' => ['required', 'string', Rule::enum(PaymentMethod::class)],
-            'external_reference' => ['required', 'string', 'max:100'],
+            'external_reference' => ['nullable', 'string', 'max:100'],
             'notes' => ['nullable', 'string', 'max:1000'],
             'proof' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:'.$maxKb],
         ];

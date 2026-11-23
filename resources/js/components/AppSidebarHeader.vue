@@ -2,17 +2,10 @@
 import GlobalSearch from '@/components/GlobalSearch.vue';
 import NotificationMenu from '@/components/NotificationMenu.vue';
 import StatusBadge from '@/components/StatusBadge.vue';
-import ThemeToggle from '@/components/ThemeToggle.vue';
-import UserMenuContent from '@/components/UserMenuContent.vue';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
-import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { getInitials } from '@/composables/useInitials';
-import type { BreadcrumbItemType, SharedData } from '@/types';
-import { usePage } from '@inertiajs/vue3';
+import type { BreadcrumbItemType } from '@/types';
 import { computed } from 'vue';
 
 interface Props {
@@ -25,8 +18,6 @@ const props = withDefaults(defineProps<Props>(), {
     variant: 'professional',
 });
 
-const page = usePage<SharedData>();
-const user = computed(() => page.props.auth.user);
 const currentTitle = computed(() => {
     const lastBreadcrumb = props.breadcrumbs[props.breadcrumbs.length - 1];
     return lastBreadcrumb?.title ?? (props.variant === 'admin' ? 'Administration' : 'Espace professionnel');
@@ -64,30 +55,9 @@ const currentTitle = computed(() => {
         </div>
 
         <div class="ml-auto flex shrink-0 items-center gap-1 sm:gap-1.5">
-            <GlobalSearch class="hidden lg:flex" />
-            <GlobalSearch mode="icon" class="lg:hidden" />
-            <ThemeToggle class="hidden sm:inline-flex" />
+            <GlobalSearch mode="icon" />
+
             <NotificationMenu />
-
-            <Separator orientation="vertical" class="mx-1 hidden h-5 sm:block" />
-
-            <DropdownMenu>
-                <DropdownMenuTrigger as-child>
-                    <Button variant="ghost" size="icon" class="rounded-full p-0.5" aria-label="Ouvrir le menu du compte">
-                        <Avatar class="size-8 overflow-hidden rounded-full ring-1 ring-border/80">
-                            <AvatarImage :src="user.avatar ?? ''" :alt="user.name" />
-                            <AvatarFallback
-                                class="rounded-full bg-brand-50 text-[11px] font-semibold text-brand-700 dark:bg-brand-950 dark:text-brand-300"
-                            >
-                                {{ getInitials(user.name) }}
-                            </AvatarFallback>
-                        </Avatar>
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" class="w-60">
-                    <UserMenuContent :user="user" />
-                </DropdownMenuContent>
-            </DropdownMenu>
         </div>
     </header>
 </template>

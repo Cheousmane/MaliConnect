@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { cn } from '@/lib/utils';
 import { Link } from '@inertiajs/vue3';
 import { useEventListener } from '@vueuse/core';
 import { ArrowUpRight, LayoutDashboard, Palette, Search, SearchX, ShieldCheck, UserRound } from 'lucide-vue-next';
@@ -22,7 +21,7 @@ const input = ref<HTMLInputElement | null>(null);
 
 const quickLinks = [
     {
-        title: 'Vue d’ensemble',
+        title: 'Tableau de bord',
         description: 'Tableau de bord professionnel',
         href: route('dashboard'),
         icon: LayoutDashboard,
@@ -81,25 +80,8 @@ function close() {
 <template>
     <Dialog v-model:open="open">
         <DialogTrigger as-child>
-            <Button
-                v-if="props.mode === 'full'"
-                variant="outline"
-                :class="
-                    cn(
-                        'h-9 w-52 justify-start gap-2 rounded-lg border-border/80 bg-muted/40 px-3 text-muted-foreground shadow-none hover:bg-muted/70 lg:w-60',
-                        props.class,
-                    )
-                "
-            >
-                <Search class="size-4" aria-hidden="true" />
-                <span class="text-sm font-normal">Rechercher…</span>
-                <kbd class="ml-auto rounded border border-border bg-background px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-                    Ctrl K
-                </kbd>
-            </Button>
-
-            <Button v-else variant="ghost" size="icon" class="text-muted-foreground" aria-label="Ouvrir la recherche">
-                <Search class="size-[18px]" aria-hidden="true" />
+            <Button variant="ghost" size="icon" class="group text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" aria-label="Ouvrir la recherche">
+                <Search class="size-[18px] transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12" aria-hidden="true" />
             </Button>
         </DialogTrigger>
 

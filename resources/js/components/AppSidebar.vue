@@ -19,14 +19,12 @@ import {
     LayoutDashboard,
     LifeBuoy,
     MessageSquare,
-    Palette,
     ReceiptText,
     ScrollText,
     ShieldCheck,
     Star,
     Store,
     Tags,
-    UserRound,
     Users,
     Wallet,
     X,
@@ -41,21 +39,11 @@ const props = withDefaults(defineProps<Props>(), {
     variant: 'professional',
 });
 
-const accountGroup: NavGroup = {
-    title: 'Compte',
-    items: [
-        { title: 'Notifications', href: '/notifications', icon: Bell },
-        { title: 'Profil', href: '/settings/profile', icon: UserRound },
-        { title: 'Sécurité', href: '/settings/password', icon: ShieldCheck },
-        { title: 'Apparence', href: '/settings/appearance', icon: Palette },
-    ],
-};
-
 const adminGroups: NavGroup[] = [
     {
         title: 'Administration',
         items: [
-            { title: 'Vue d’ensemble', href: '/admin', icon: LayoutDashboard },
+            { title: 'Tableau de bord', href: '/admin', icon: LayoutDashboard },
             { title: 'Profils à vérifier', href: '/admin/provider-profiles', icon: ClipboardCheck },
             { title: 'Utilisateurs', href: '/admin/users', icon: Users },
             { title: 'Entreprises', href: '/admin/businesses', icon: Building2 },
@@ -86,7 +74,7 @@ const groups = computed<NavGroup[]>(() => {
     const isProfessional = permissions.includes('provider_profiles.create') || permissions.includes('service_requests.respond');
     const isCustomer = permissions.includes('service_requests.create');
 
-    const items: NavItem[] = [{ title: 'Vue d’ensemble', href: '/dashboard', icon: LayoutDashboard }];
+    const items: NavItem[] = [{ title: 'Tableau de bord', href: '/dashboard', icon: LayoutDashboard }];
 
     if (isProfessional) {
         items.push(
@@ -99,6 +87,7 @@ const groups = computed<NavGroup[]>(() => {
             { title: 'Mon abonnement', href: '/pro/abonnement', icon: Wallet },
             { title: 'Formules', href: '/pro/abonnement/offres', icon: Tags },
             { title: 'Messages', href: '#', icon: MessageSquare, disabled: true, badge: 'Bientôt' },
+            { title: 'Notifications', href: '/notifications', icon: Bell },
         );
     }
 
@@ -108,7 +97,13 @@ const groups = computed<NavGroup[]>(() => {
             { title: 'Mes réservations', href: '/reservations', icon: CalendarClock },
             { title: 'Mes favoris', href: '/favoris', icon: Heart },
             { title: 'Mes avis', href: '/avis', icon: Star },
+            { title: 'Notifications', href: '/notifications', icon: Bell },
         );
+    }
+
+    // Cas général : au moins l'accès aux notifications.
+    if (!isProfessional && !isCustomer) {
+        items.push({ title: 'Notifications', href: '/notifications', icon: Bell });
     }
 
     return [
@@ -116,7 +111,6 @@ const groups = computed<NavGroup[]>(() => {
             title: isProfessional ? 'Espace professionnel' : 'Espace client',
             items,
         },
-        accountGroup,
     ];
 });
 

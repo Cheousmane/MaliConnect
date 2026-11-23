@@ -7,9 +7,12 @@ import { LogOut, Palette, UserRound } from 'lucide-vue-next';
 
 interface Props {
     user: User;
+    showSettings?: boolean;
 }
 
-defineProps<Props>();
+withDefaults(defineProps<Props>(), {
+    showSettings: true,
+});
 </script>
 
 <template>
@@ -21,7 +24,7 @@ defineProps<Props>();
 
     <DropdownMenuSeparator />
 
-    <DropdownMenuGroup>
+    <DropdownMenuGroup v-if="showSettings">
         <DropdownMenuItem :as-child="true">
             <Link class="flex w-full cursor-pointer items-center gap-2" :href="route('profile.edit')" as="button">
                 <UserRound class="size-4 text-muted-foreground" aria-hidden="true" />
@@ -37,7 +40,7 @@ defineProps<Props>();
         </DropdownMenuItem>
     </DropdownMenuGroup>
 
-    <DropdownMenuSeparator />
+    <DropdownMenuSeparator v-if="showSettings" />
 
     <DropdownMenuItem :as-child="true" class="text-destructive focus:bg-destructive/10 focus:text-destructive">
         <Link class="flex w-full cursor-pointer items-center gap-2" method="post" :href="route('logout')" as="button">

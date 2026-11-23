@@ -279,7 +279,7 @@ class PaymentController extends Controller
             'business' => $payment->business?->name,
             'subscription_id' => $payment->subscription_id,
             'proofs_count' => $payment->proofs_count ?? $payment->proofs()->count(),
-            'can_review' => $payment->isPending(),
+            'can_review' => $payment->isPending() && (auth()->user()?->can('payments.manage') ?? false),
             'declared_at' => $payment->declared_at?->toIso8601String(),
             'paid_at' => $payment->paid_at?->toIso8601String(),
             'verified_at' => $payment->verified_at?->toIso8601String(),

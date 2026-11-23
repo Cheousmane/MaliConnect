@@ -6,6 +6,7 @@ import type { DefineComponent } from 'vue';
 import { createApp, h } from 'vue';
 import { ZiggyVue } from '../../vendor/tightenco/ziggy';
 import { initializeTheme } from './composables/useAppearance';
+import { vReveal } from './directives/reveal';
 
 const appName = import.meta.env.VITE_APP_NAME || 'MaliConnect';
 
@@ -16,6 +17,7 @@ createInertiaApp({
         createApp({ render: () => h(App, props) })
             .use(plugin)
             .use(ZiggyVue)
+            .directive('reveal', vReveal)
             .mount(el);
     },
     progress: {

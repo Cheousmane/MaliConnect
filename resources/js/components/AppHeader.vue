@@ -2,17 +2,12 @@
 import AppLogo from '@/components/AppLogo.vue';
 import GlobalSearch from '@/components/GlobalSearch.vue';
 import NotificationMenu from '@/components/NotificationMenu.vue';
-import ThemeToggle from '@/components/ThemeToggle.vue';
-import UserMenuContent from '@/components/UserMenuContent.vue';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { getInitials } from '@/composables/useInitials';
 import type { BreadcrumbItemType, NavItem, SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { ArrowRight, Inbox, LayoutDashboard, Menu, MessageSquare, UserRound } from 'lucide-vue-next';
+import { ArrowRight, Inbox, LayoutDashboard, Menu, MessageSquare } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 interface Props {
@@ -24,11 +19,10 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const page = usePage<SharedData>();
-const user = computed(() => page.props.auth.user);
 const currentPath = computed(() => page.url.split('?')[0]);
 
 const mainNavItems: NavItem[] = [
-    { title: 'Vue d’ensemble', href: '/dashboard', icon: LayoutDashboard },
+    { title: 'Tableau de bord', href: '/dashboard', icon: LayoutDashboard },
     { title: 'Demandes', href: '#', icon: Inbox, disabled: true, badge: 'Bientôt' },
     { title: 'Messages', href: '#', icon: MessageSquare, disabled: true, badge: 'Bientôt' },
 ];
@@ -41,11 +35,7 @@ function isActive(href: string): boolean {
 <template>
     <header class="glass-surface sticky top-0 z-40 border-b border-border/60">
         <div class="page-container flex h-16 items-center gap-3">
-            <Link :href="route('dashboard')" class="shrink-0" aria-label="MaliConnect — Tableau de bord">
-                <AppLogo />
-            </Link>
-
-            <nav class="ml-4 hidden items-center gap-1 lg:flex" aria-label="Navigation principale">
+            <nav class="hidden items-center gap-1 lg:flex" aria-label="Navigation principale">
                 <template v-for="item in mainNavItems" :key="item.title">
                     <span
                         v-if="item.disabled"
@@ -77,28 +67,9 @@ function isActive(href: string): boolean {
             </nav>
 
             <div class="ml-auto flex shrink-0 items-center gap-1 sm:gap-1.5">
-                <GlobalSearch class="hidden xl:flex" />
-                <GlobalSearch mode="icon" class="xl:hidden" />
-                <ThemeToggle class="hidden sm:inline-flex" />
-                <NotificationMenu />
+                <GlobalSearch mode="icon" />
 
-                <DropdownMenu>
-                    <DropdownMenuTrigger as-child>
-                        <Button variant="ghost" size="icon" class="rounded-full p-0.5" aria-label="Ouvrir le menu du compte">
-                            <Avatar class="size-8 overflow-hidden rounded-full ring-1 ring-border/80">
-                                <AvatarImage :src="user.avatar ?? ''" :alt="user.name" />
-                                <AvatarFallback
-                                    class="rounded-full bg-brand-50 text-[11px] font-semibold text-brand-700 dark:bg-brand-950 dark:text-brand-300"
-                                >
-                                    {{ getInitials(user.name) }}
-                                </AvatarFallback>
-                            </Avatar>
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" class="w-60">
-                        <UserMenuContent :user="user" />
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                <NotificationMenu />
 
                 <Sheet>
                     <SheetTrigger as-child>
@@ -146,16 +117,7 @@ function isActive(href: string): boolean {
                                 </template>
                             </nav>
 
-                            <div class="space-y-2 border-t border-border/70 p-4">
-                                <ThemeToggle class="w-full justify-start gap-2 px-3" />
 
-                                <Button as-child variant="soft" class="w-full justify-start">
-                                    <Link :href="route('profile.edit')">
-                                        <UserRound class="size-4" aria-hidden="true" />
-                                        Mon profil
-                                    </Link>
-                                </Button>
-                            </div>
                         </div>
                     </SheetContent>
                 </Sheet>

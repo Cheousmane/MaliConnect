@@ -23,7 +23,7 @@ const submit = () => {
     <AuthLayout title="Confirmez votre mot de passe" description="Cette zone est sécurisée. Confirmez votre mot de passe pour continuer.">
         <Head title="Confirmer le mot de passe" />
 
-        <form @submit.prevent="submit" class="space-y-5">
+        <form @submit.prevent="submit" class="space-y-5 stagger-children">
             <FormField label="Mot de passe" for="password" :error="form.errors.password" required>
                 <div class="relative">
                     <LockKeyhole
@@ -44,7 +44,7 @@ const submit = () => {
                 </div>
             </FormField>
 
-            <Button type="submit" variant="brand" size="lg" class="w-full" :disabled="form.processing">
+            <Button type="submit" variant="brand" size="lg" class="w-full press" :disabled="form.processing">
                 <LoaderCircle v-if="form.processing" class="size-4 animate-spin" aria-hidden="true" />
                 Confirmer
             </Button>

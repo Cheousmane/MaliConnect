@@ -2,6 +2,7 @@
 import FavoriteButton from '@/components/FavoriteButton.vue';
 import StarRating from '@/components/StarRating.vue';
 import StatusBadge from '@/components/StatusBadge.vue';
+import LocationMap from '@/components/LocationMap.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import PublicLayout from '@/layouts/public/PublicLayout.vue';
@@ -75,6 +76,8 @@ type Profile = {
     phone: string | null;
     whatsapp: string | null;
     address: string | null;
+    latitude: number | null;
+    longitude: number | null;
     city: string;
     commune: string | null;
     quartier: string | null;
@@ -621,6 +624,14 @@ const copyPricingLink = async (sheet: PricingSheet) => {
                                 <MapPin class="mt-0.5 size-4 shrink-0" aria-hidden="true" />
                                 {{ profile.address }}
                             </p>
+
+                            <LocationMap
+                                v-if="profile.latitude != null && profile.longitude != null"
+                                :latitude="profile.latitude"
+                                :longitude="profile.longitude"
+                                height="260px"
+                                class="mt-4"
+                            />
                         </CardContent>
                     </Card>
                 </aside>

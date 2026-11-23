@@ -9,6 +9,9 @@
             content="MaliConnect met en relation particuliers et professionnels de confiance partout au Mali."
         >
 
+        <link rel="icon" type="image/svg+xml" href="/logo.svg">
+        <link rel="icon" type="image/x-icon" href="/favicon.ico">
+
         <title inertia>{{ config('app.name', 'MaliConnect') }}</title>
 
         <link rel="preconnect" href="https://fonts.bunny.net">

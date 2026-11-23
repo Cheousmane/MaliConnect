@@ -10,10 +10,12 @@ use App\Models\Payment;
 use App\Models\PaymentProof;
 use App\Models\Plan;
 use App\Models\ProviderBooking;
+use App\Models\ProviderProfile;
 use App\Models\Report;
 use App\Models\ServiceRequest;
 use App\Models\Subscription;
 use App\Models\User;
+use App\Services\Monetization\SubscriptionService;
 use Database\Seeders\PlanSeeder;
 use Database\Seeders\RoleSeeder;
 
@@ -123,4 +125,56 @@ test('un professionnel ne peut pas accéder aux modules sensibles', function () 
     $this->actingAs($professional)->get('/admin/demandes')->assertForbidden();
     $this->actingAs($professional)->get('/admin/paiements')->assertForbidden();
     $this->actingAs($professional)->get('/admin/journal')->assertForbidden();
+});
+
+test('la fiche d’un paiement en attente propose la validation à l’administrateur', function () {
+    $admin = operationsAdmin();
+    $this->seed(PlanSeeder::class);
+    $plan = Plan::query()->where('code', 'pro')->firstOrFail();
+    $payment = Payment::factory()->pending()->forPlan($plan)->create(['amount' => 5000]);
+    PaymentProof::factory()->create(['payment_id' => $payment->id]);
+
+    $this->actingAs($admin)
+        ->get("/admin/paiements/{$payment->id}")
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('admin/PaymentDetail')
+            ->where('payment.can_review', true)
+        );
+});
+
+test('un paiement traité ne propose plus la validation', function () {
+    $admin = operationsAdmin();
+    $this->seed(PlanSeeder::class);
+    $plan = Plan::query()->where('code', 'pro')->firstOrFail();
+    $payment = Payment::factory()->paid()->forPlan($plan)->create(['amount' => 5000]);
+    PaymentProof::factory()->create(['payment_id' => $payment->id]);
+
+    $this->actingAs($admin)
+        ->get("/admin/paiements/{$payment->id}")
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('admin/PaymentDetail')
+            ->where('payment.can_review', false)
+        );
+});
+
+test('les abonnements FREE apparaissent dans l’administration', function () {
+    $admin = operationsAdmin();
+    $this->seed(PlanSeeder::class);
+
+    $user = User::factory()->create();
+    $user->assignRole('professional');
+    $profile = ProviderProfile::factory()->forUser($user)->verified()->create();
+
+    app(SubscriptionService::class)->ensureFreeSubscription($profile, $user);
+
+    $this->actingAs($admin)
+        ->get('/admin/abonnements')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('admin/Subscriptions')
+            ->where('subscriptions.data.0.plan.code', 'free')
+            ->where('subscriptions.data.0.status', SubscriptionStatus::Active->value)
+        );
 });

@@ -56,6 +56,7 @@ const icon = computed(() => {
                     <DialogDescription v-if="description" class="mt-2 text-sm leading-relaxed">
                         {{ description }}
                     </DialogDescription>
+                    <DialogDescription v-else class="sr-only">Confirmation</DialogDescription>
                 </div>
             </div>
 

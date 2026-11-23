@@ -438,11 +438,13 @@ class ServiceRequestController extends Controller
             return back()->with('error', 'Ce devis n’est plus disponible.');
         }
 
-        DB::transaction(function () use ($serviceRequest, $quote) {
+        $reason = $request->validated('reason');
+
+        DB::transaction(function () use ($serviceRequest, $quote, $reason) {
             $quote->forceFill([
                 'status' => QuoteStatus::Rejected,
                 'responded_at' => now(),
-                'rejection_reason' => $request->validated('reason'),
+                'rejection_reason' => $reason,
             ])->save();
 
             // Sans autre devis en attente, la demande revient en cours de traitement.
@@ -458,7 +460,7 @@ class ServiceRequestController extends Controller
         $serviceRequest->load('customer');
         $notifications->toProfileManagers(
             $serviceRequest->providerProfile,
-            new QuoteRejectedNotification($serviceRequest, $quote, $request->validated('reason')),
+            new QuoteRejectedNotification($serviceRequest, $quote, $reason),
         );
 
         return back()->with('success', 'Le devis a été refusé.');

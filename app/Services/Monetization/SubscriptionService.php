@@ -59,7 +59,7 @@ final class SubscriptionService
                 'business_id' => $business?->id,
                 'plan_id' => $freePlan->id,
                 'plan' => $freePlan->code,
-                'billing_cycle' => \App\Enums\BillingCycle::Monthly,
+                'billing_cycle' => BillingCycle::Monthly,
                 'status' => SubscriptionStatus::Active,
                 'starts_at' => now(),
                 'ends_at' => null,
@@ -75,7 +75,7 @@ final class SubscriptionService
                 SubscriptionStatus::Active,
                 null,
                 $freePlan,
-                \App\Enums\BillingCycle::Monthly,
+                BillingCycle::Monthly,
                 0,
                 $actor,
                 'Abonnement FREE créé automatiquement.',
@@ -86,6 +86,43 @@ final class SubscriptionService
     }
 
     // ─── Souscription ────────────────────────────────────────
+
+    /**
+     * Indique si le propriétaire peut encore bénéficier d'un essai gratuit.
+     *
+     * L'essai n'est accordé qu'une seule fois : l'abonnement FREE créé
+     * automatiquement à l'ouverture du profil reste éligible, mais un compte
+     * ayant déjà consommé son essai doit régler sa souscription.
+     */
+    public function isTrialAvailable(ProviderProfile|Business $owner): bool
+    {
+        [$profile, $business] = $this->ownerIds($owner);
+
+        $subscription = Subscription::query()
+            ->forOwner($profile, $business)
+            ->with('planModel')
+            ->first();
+
+        if ($subscription === null) {
+            return true;
+        }
+
+        if ($subscription->planModel?->isFree() !== true) {
+            return false;
+        }
+
+        return ! $subscription->histories()
+            ->where('event', 'trial_started')
+            ->exists();
+    }
+
+    /**
+     * Indique si un essai gratuit peut être démarré pour cette formule.
+     */
+    public function canStartTrial(ProviderProfile|Business $owner, Plan $plan): bool
+    {
+        return $plan->trial_days > 0 && $this->isTrialAvailable($owner);
+    }
 
     /**
      * Déclare un paiement pour une formule payante.
@@ -99,7 +136,7 @@ final class SubscriptionService
         Plan $plan,
         BillingCycle $cycle,
         PaymentMethod $method,
-        string $externalReference,
+        ?string $externalReference,
         ?UploadedFile $proof,
         User $actor,
         ?string $notes = null,
@@ -118,37 +155,66 @@ final class SubscriptionService
 
         [$profile, $business] = $this->ownerIds($owner);
 
-        // Si le plan offre un essai gratuit et qu'il n'y a pas encore d'abonnement,
-        // on crée un abonnement en période d'essai sans paiement.
-        $hasTrial = $plan->trial_days > 0;
-
-        $existingSubscription = Subscription::query()
-            ->forOwner($profile, $business)
-            ->first();
-
-        if ($hasTrial && $existingSubscription === null) {
+        // Un essai gratuit est possible si le propriétaire n'a encore jamais
+        // consommé d'essai : soit aucun abonnement, soit l'abonnement FREE
+        // créé automatiquement à l'ouverture du profil.
+        if ($this->canStartTrial($owner, $plan)) {
             $subscription = DB::transaction(function () use ($profile, $business, $plan, $cycle, $actor) {
-                $subscription = Subscription::create([
-                    'provider_profile_id' => $profile?->id,
-                    'business_id' => $business?->id,
-                    'plan_id' => $plan->id,
-                    'plan' => $plan->code,
-                    'billing_cycle' => $cycle,
-                    'status' => SubscriptionStatus::Trialing,
-                    'starts_at' => now(),
-                    'ends_at' => null,
-                    'activated_at' => null,
-                    'trial_ends_at' => now()->addDays($plan->trial_days),
-                    'amount' => $plan->priceFor($cycle),
-                    'currency' => $plan->currency ?: 'XOF',
-                ]);
+                $subscription = Subscription::query()
+                    ->forOwner($profile, $business)
+                    ->lockForUpdate()
+                    ->first();
+
+                if ($subscription === null) {
+                    $previousStatus = null;
+                    $previousPlan = null;
+
+                    $subscription = Subscription::create([
+                        'provider_profile_id' => $profile?->id,
+                        'business_id' => $business?->id,
+                        'plan_id' => $plan->id,
+                        'plan' => $plan->code,
+                        'billing_cycle' => $cycle,
+                        'status' => SubscriptionStatus::Trialing,
+                        'starts_at' => now(),
+                        'ends_at' => null,
+                        'activated_at' => null,
+                        'trial_ends_at' => now()->addDays($plan->trial_days),
+                        'amount' => $plan->priceFor($cycle),
+                        'currency' => $plan->currency ?: 'XOF',
+                    ]);
+                } else {
+                    $previousStatus = $subscription->status;
+                    $previousPlan = $subscription->planModel;
+
+                    $subscription->forceFill([
+                        'plan_id' => $plan->id,
+                        'plan' => $plan->code,
+                        'billing_cycle' => $cycle,
+                        'status' => SubscriptionStatus::Trialing,
+                        'starts_at' => now(),
+                        'ends_at' => null,
+                        'activated_at' => null,
+                        'trial_ends_at' => now()->addDays($plan->trial_days),
+                        'amount' => $plan->priceFor($cycle),
+                        'currency' => $plan->currency ?: 'XOF',
+                        'grace_ends_at' => null,
+                        'suspended_at' => null,
+                        'cancelled_at' => null,
+                        'cancel_at_period_end' => false,
+                        'cancellation_reason' => null,
+                        'pending_plan_id' => null,
+                        'pending_billing_cycle' => null,
+                        'pending_plan_effective_at' => null,
+                    ])->save();
+                }
 
                 $this->recordHistory(
                     $subscription,
                     'trial_started',
-                    null,
+                    $previousStatus,
                     SubscriptionStatus::Trialing,
-                    null,
+                    $previousPlan,
                     $plan,
                     $cycle,
                     $plan->priceFor($cycle),
@@ -248,6 +314,12 @@ final class SubscriptionService
                 ])->save();
 
                 $this->recordHistory($subscription, 'plan_scheduled', $subscription->status, $subscription->status, $previousPlan, $plan, $cycle, $plan->priceFor($cycle), $actor, 'Changement de formule en attente de vérification du paiement.');
+            }
+
+            if (blank($externalReference)) {
+                throw ValidationException::withMessages([
+                    'external_reference' => 'Indiquez la référence de votre transaction.',
+                ]);
             }
 
             $payment = Payment::create([
