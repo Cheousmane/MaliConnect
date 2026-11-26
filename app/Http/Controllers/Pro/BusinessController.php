@@ -9,6 +9,7 @@ use App\Http\Requests\Pro\StoreBusinessRequest;
 use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Models\ProviderProfile;
+use App\Services\Monetization\SubscriptionService;
 use App\Support\Identity\SlugGenerator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -102,7 +103,7 @@ class BusinessController extends Controller
             ]);
 
             // Abonnement FREE automatique pour l'entreprise.
-            app(\App\Services\Monetization\SubscriptionService::class)->ensureFreeSubscription($business, $user);
+            app(SubscriptionService::class)->ensureFreeSubscription($business, $user);
 
             return $business;
         });

@@ -19,6 +19,7 @@ use App\Models\User;
 use App\Rules\MaliPhoneNumber;
 use App\Services\Monetization\EntitlementService;
 use App\Services\Monetization\SubscriptionNotifier;
+use App\Services\Monetization\SubscriptionService;
 use App\Support\Identity\SlugGenerator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -151,7 +152,7 @@ class ProviderProfileController extends Controller
 
             // Abonnement FREE automatique pour les profils indépendants.
             if ($business === null) {
-                app(\App\Services\Monetization\SubscriptionService::class)->ensureFreeSubscription($profile, $user);
+                app(SubscriptionService::class)->ensureFreeSubscription($profile, $user);
             }
 
             // Horaires d'ouverture par défaut : du lundi au samedi.
@@ -510,7 +511,7 @@ class ProviderProfileController extends Controller
                 'slug' => $profile->slug,
                 'description' => $profile->description,
                 'logo_path' => $profile->logo_path,
-                'logo_url' => $profile->logo_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($profile->logo_path) : null,
+                'logo_url' => $profile->logo_path ? Storage::disk('public')->url($profile->logo_path) : null,
                 'phone' => $profile->phone,
                 'whatsapp' => $profile->whatsapp,
                 'email' => $profile->email,

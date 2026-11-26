@@ -112,6 +112,7 @@ class DashboardController extends Controller
 
         $oldestPendingDays = static function ($query): ?int {
             $date = $query->min('created_at');
+
             return $date ? now()->diffInDays($date) : null;
         };
 

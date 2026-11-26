@@ -52,19 +52,19 @@ class CategorySeeder extends Seeder
 
         // Les catégories qui ne font plus partie du catalogue initial restent
         // en base (données historiques) mais ne sont plus proposées.
-        $slugs = collect($categories)->map(fn(array $data) => Str::slug($data['name']));
+        $slugs = collect($categories)->map(fn (array $data) => Str::slug($data['name']));
 
         Category::query()->whereNotIn('slug', $slugs)->update(['is_active' => false]);
 
         // Idem pour les sous-catégories : celles qui ne sont plus au catalogue
         // sont désactivées, sans être supprimées.
         $subcategorySlugs = collect($categories)
-            ->flatMap(fn(array $data) => $data['subcategories'])
-            ->map(fn(string $name) => Str::slug($name));
+            ->flatMap(fn (array $data) => $data['subcategories'])
+            ->map(fn (string $name) => Str::slug($name));
 
         Subcategory::query()->whereNotIn('slug', $subcategorySlugs)->update(['is_active' => false]);
 
-        $this->command->info(Category::query()->where('is_active', true)->count() . ' catégories et ' . Subcategory::query()->where('is_active', true)->count() . ' sous-catégories actives');
+        $this->command->info(Category::query()->where('is_active', true)->count().' catégories et '.Subcategory::query()->where('is_active', true)->count().' sous-catégories actives');
     }
 
     /**

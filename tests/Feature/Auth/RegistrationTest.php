@@ -16,8 +16,8 @@ test('new users can register', function () {
     $response = $this->post('/register', [
         'name' => 'Test User',
         'email' => 'test@example.com',
-        'password' => 'password',
-        'password_confirmation' => 'password',
+        'password' => 'Password123!',
+        'password_confirmation' => 'Password123!',
     ]);
 
     $this->assertAuthenticated();
@@ -35,8 +35,8 @@ test('registration sends an email verification link', function () {
     $this->post('/register', [
         'name' => 'Test User',
         'email' => 'test@example.com',
-        'password' => 'password',
-        'password_confirmation' => 'password',
+        'password' => 'Password123!',
+        'password_confirmation' => 'Password123!',
     ]);
 
     Notification::assertSentTo(User::where('email', 'test@example.com')->firstOrFail(), VerifyEmail::class);
@@ -46,8 +46,8 @@ test('a registered user only receives the customer role', function () {
     $this->post('/register', [
         'name' => 'Test User',
         'email' => 'test@example.com',
-        'password' => 'password',
-        'password_confirmation' => 'password',
+        'password' => 'Password123!',
+        'password_confirmation' => 'Password123!',
     ]);
 
     $user = User::where('email', 'test@example.com')->firstOrFail();
@@ -66,8 +66,8 @@ test('registration rejects a duplicate email address', function () {
     $response = $this->post('/register', [
         'name' => 'Test User',
         'email' => 'test@example.com',
-        'password' => 'password',
-        'password_confirmation' => 'password',
+        'password' => 'Password123!',
+        'password_confirmation' => 'Password123!',
     ]);
 
     $response->assertSessionHasErrors('email');
@@ -80,8 +80,8 @@ test('registration rejects an invalid phone number', function () {
         'name' => 'Test User',
         'email' => 'test@example.com',
         'phone' => '12345',
-        'password' => 'password',
-        'password_confirmation' => 'password',
+        'password' => 'Password123!',
+        'password_confirmation' => 'Password123!',
     ]);
 
     $response->assertSessionHasErrors('phone');
@@ -94,8 +94,8 @@ test('registration normalizes a malian phone number', function () {
         'name' => 'Test User',
         'email' => 'test@example.com',
         'phone' => '76 12 34 56',
-        'password' => 'password',
-        'password_confirmation' => 'password',
+        'password' => 'Password123!',
+        'password_confirmation' => 'Password123!',
     ]);
 
     $user = User::where('email', 'test@example.com')->firstOrFail();
@@ -108,8 +108,8 @@ test('registration accepts any eight digit phone number', function () {
         'name' => 'Test User',
         'email' => 'test@example.com',
         'phone' => '20 12 34 56',
-        'password' => 'password',
-        'password_confirmation' => 'password',
+        'password' => 'Password123!',
+        'password_confirmation' => 'Password123!',
     ]);
 
     $user = User::where('email', 'test@example.com')->firstOrFail();
@@ -122,8 +122,8 @@ test('registration rejects a phone number that is not eight digits', function ()
         'name' => 'Test User',
         'email' => 'test@example.com',
         'phone' => '1234567',
-        'password' => 'password',
-        'password_confirmation' => 'password',
+        'password' => 'Password123!',
+        'password_confirmation' => 'Password123!',
     ]);
 
     $response->assertSessionHasErrors('phone');
@@ -135,8 +135,8 @@ test('a professional registration assigns the professional role', function () {
     $response = $this->post('/register', [
         'name' => 'Professionnel Indépendant',
         'email' => 'pro@example.com',
-        'password' => 'password',
-        'password_confirmation' => 'password',
+        'password' => 'Password123!',
+        'password_confirmation' => 'Password123!',
         'plan' => 'pro',
     ]);
 
@@ -154,8 +154,8 @@ test('a business registration assigns the company manager role', function () {
     $response = $this->post('/register', [
         'name' => 'Gestionnaire Entreprise',
         'email' => 'entreprise@example.com',
-        'password' => 'password',
-        'password_confirmation' => 'password',
+        'password' => 'Password123!',
+        'password_confirmation' => 'Password123!',
         'plan' => 'business',
     ]);
 

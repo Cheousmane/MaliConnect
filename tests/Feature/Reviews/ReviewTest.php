@@ -129,7 +129,7 @@ test('une réservation non terminée ne peut pas être évaluée', function () {
     expect(ProviderReview::count())->toBe(0);
 });
 
-test('une réservation terminée mais dont le créneau est futur est refusée', function () {
+test('une réservation terminée peut être évaluée même si le créneau est futur', function () {
     $customer = reviewTestCustomer();
     [, $profile] = reviewTestProfessional();
 
@@ -139,11 +139,12 @@ test('une réservation terminée mais dont le créneau est futur est refusée', 
     $this->actingAs($customer)
         ->post("/reservations/{$booking->id}/avis", [
             'rating' => 4,
-            'comment' => 'Le créneau annoncé ne peut pas encore être évalué.',
+            'comment' => 'La prestation a été terminée avant le créneau prévu.',
         ])
-        ->assertForbidden();
+        ->assertRedirect(route('reviews.index'))
+        ->assertSessionHasNoErrors();
 
-    expect(ProviderReview::count())->toBe(0);
+    expect(ProviderReview::count())->toBe(1);
 });
 
 test('un client ne peut pas évaluer la prestation d’un autre client', function () {

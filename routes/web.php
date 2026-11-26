@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\ProfileStatus;
 use App\Http\Controllers\GuidedTourController;
 use App\Models\Category;
 use App\Models\Plan;
@@ -195,7 +196,7 @@ Route::get('dashboard', function (Request $request) {
             || filled($primaryProfile->quartier)
             || ($primaryProfile->latitude !== null && $primaryProfile->longitude !== null)
         );
-        $isVerified = $primaryProfile->status === \App\Enums\ProfileStatus::Verified;
+        $isVerified = $primaryProfile->status === ProfileStatus::Verified;
 
         $items = [
             ['label' => 'Photo de profil', 'complete' => $hasPhoto],
