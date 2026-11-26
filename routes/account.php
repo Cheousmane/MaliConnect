@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware(['auth', 'verified', 'active'])->group(function () {
+Route::middleware(['auth', 'verified', 'active', 'throttle:60,1'])->group(function () {
     // Favoris
     Route::get('favoris', [FavoriteController::class, 'index'])->name('favorites.index');
     Route::post('favoris/{profile}', [FavoriteController::class, 'store'])->name('favorites.store');

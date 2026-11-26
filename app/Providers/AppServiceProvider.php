@@ -24,6 +24,7 @@ use App\Policies\SubscriptionPolicy;
 use App\Policies\UserPolicy;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Validation\Rules\Password;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -52,6 +53,12 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Payment::class, PaymentPolicy::class);
         Gate::policy(Report::class, ReportPolicy::class);
         Gate::policy(AdminAuditLog::class, AdminAuditLogPolicy::class);
+
+        Password::defaults(function () {
+            $rule = Password::min(8)->letters()->numbers();
+
+            return app()->isProduction() ? $rule->uncompromised() : $rule;
+        });
 
         // Le rôle « super-admin » porte toutes les permissions du catalogue :
         // aucun contournement global n'est appliqué, afin que les protections

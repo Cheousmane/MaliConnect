@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuBadge, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
+import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuBadge, SidebarMenuButton, SidebarMenuItem, useSidebar } from '@/components/ui/sidebar';
 import type { NavGroup, SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
 
@@ -8,6 +8,7 @@ defineProps<{
 }>();
 
 const page = usePage<SharedData>();
+const { isMobile, setOpenMobile } = useSidebar();
 
 function isActive(href: string): boolean {
     const current = page.url.split('?')[0].split('#')[0];
@@ -17,6 +18,31 @@ function isActive(href: string): boolean {
     }
 
     return current === href || current.startsWith(`${href}/`);
+}
+
+function onNavigate() {
+    if (isMobile.value) setOpenMobile(false);
+}
+
+function tourIdFor(href: string): string | undefined {
+    const map: Record<string, string> = {
+        '/demandes': 'nav-demandes',
+        '/reservations': 'nav-reservations',
+        '/favoris': 'nav-favoris',
+        '/pro/profiles': 'nav-profiles',
+        '/pro/demandes': 'nav-pro-demandes',
+        '/pro/reservations': 'nav-pro-reservations',
+        '/pro/avis': 'nav-pro-avis',
+        '/pro/abonnement': 'nav-pro-abonnement',
+        '/admin/users': 'nav-admin-users',
+        '/admin/roles': 'nav-admin-users',
+        '/admin/provider-profiles': 'nav-admin-moderation',
+        '/admin/plans': 'nav-admin-plans',
+        '/admin/formules': 'nav-admin-plans',
+        '/admin/abonnements': 'nav-admin-plans',
+        '/admin/journal': 'nav-admin-audit',
+    };
+    return map[href];
 }
 </script>
 
@@ -39,17 +65,39 @@ function isActive(href: string): boolean {
                     ]"
                     as-child
                 >
-                    <button v-if="item.disabled" type="button" disabled class="flex w-full items-center gap-2.5 text-left">
+                    <button
+                        v-if="item.disabled"
+                        type="button"
+                        disabled
+                        class="flex w-full items-center gap-2.5 text-left"
+                        :data-tour="tourIdFor(item.href)"
+                        :aria-label="`${item.title} (bientôt disponible)`"
+                    >
                         <component :is="item.icon" class="size-[18px]" aria-hidden="true" />
                         <span class="truncate">{{ item.title }}</span>
                     </button>
 
-                    <a v-else-if="item.external" :href="item.href" target="_blank" rel="noopener noreferrer" class="flex w-full items-center gap-2.5">
+                    <a
+                        v-else-if="item.external"
+                        :href="item.href"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="flex w-full items-center gap-2.5"
+                        :data-tour="tourIdFor(item.href)"
+                        @click="onNavigate"
+                    >
                         <component :is="item.icon" class="size-[18px]" aria-hidden="true" />
                         <span class="truncate">{{ item.title }}</span>
                     </a>
 
-                    <Link v-else :href="item.href" class="flex w-full items-center gap-2.5">
+                    <Link
+                        v-else
+                        :href="item.href"
+                        class="flex w-full items-center gap-2.5"
+                        :data-tour="tourIdFor(item.href)"
+                        :aria-current="isActive(item.href) ? 'page' : undefined"
+                        @click="onNavigate"
+                    >
                         <component :is="item.icon" class="size-[18px]" aria-hidden="true" />
                         <span class="truncate">{{ item.title }}</span>
                     </Link>

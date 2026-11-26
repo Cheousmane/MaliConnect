@@ -21,7 +21,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware(['auth', 'verified', 'active'])
+Route::middleware(['auth', 'verified', 'active', 'throttle:120,1'])
     ->prefix('pro')
     ->name('pro.')
     ->group(function () {

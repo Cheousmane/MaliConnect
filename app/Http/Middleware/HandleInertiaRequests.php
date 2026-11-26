@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Http\Controllers\GuidedTourController;
 use App\Support\Notifications\NotificationPresenter;
 use Illuminate\Http\Request;
 use Illuminate\Notifications\DatabaseNotification;
@@ -58,6 +59,8 @@ class HandleInertiaRequests extends Middleware
                 ->values()
                 ->all() ?? [],
             'unreadNotificationsCount' => fn () => $user?->unreadNotifications()->count() ?? 0,
+            'unreadMessageNotificationsCount' => fn () => $user?->unreadNotifications()->where('data->icon', 'message-square')->count() ?? 0,
+            'guidedTour' => fn () => GuidedTourController::currentState($user),
         ]);
     }
 }

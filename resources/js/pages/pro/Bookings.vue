@@ -82,6 +82,8 @@ const applyFilter = () => {
     );
 };
 
+const pageUrl = (page: number) => route('pro.bookings.index', { status: status.value || undefined, page });
+
 const nextStatuses = (booking: Booking): string[] => {
     return Object.entries(props.transitions)
         .filter(([, sources]) => sources.includes(booking.status))
@@ -205,7 +207,22 @@ const updateStatus = (booking: Booking, target: string) => {
                         </li>
                     </ul>
 
-                    <p v-else class="text-sm text-muted-foreground">Aucune réservation pour le moment.</p>
+                    <div v-else class="rounded-xl border border-dashed border-border p-8 text-center">
+                        <p class="text-sm font-medium text-foreground">{{ status ? 'Aucune réservation pour ce filtre' : 'Aucune réservation pour le moment' }}</p>
+                        <p class="mt-1 text-sm text-muted-foreground">{{ status ? 'Essayez un autre statut.' : 'Les réservations de vos clients apparaîtront ici.' }}</p>
+                    </div>
+
+                    <nav v-if="bookings.last_page > 1" class="mt-4 flex items-center justify-between gap-3" aria-label="Pagination des réservations">
+                        <p class="text-xs text-muted-foreground">Page {{ bookings.current_page }} sur {{ bookings.last_page }}</p>
+                        <div class="flex gap-2">
+                            <Button as-child variant="outline" size="sm" :class="bookings.current_page <= 1 ? 'pointer-events-none opacity-50' : ''">
+                                <Link :href="pageUrl(bookings.current_page - 1)">Précédent</Link>
+                            </Button>
+                            <Button as-child variant="outline" size="sm" :class="bookings.current_page >= bookings.last_page ? 'pointer-events-none opacity-50' : ''">
+                                <Link :href="pageUrl(bookings.current_page + 1)">Suivant</Link>
+                            </Button>
+                        </div>
+                    </nav>
                 </CardContent>
             </Card>
         </div>

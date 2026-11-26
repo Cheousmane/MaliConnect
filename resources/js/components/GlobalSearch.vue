@@ -80,7 +80,13 @@ function close() {
 <template>
     <Dialog v-model:open="open">
         <DialogTrigger as-child>
-            <Button variant="ghost" size="icon" class="group text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" aria-label="Ouvrir la recherche">
+            <Button
+                variant="ghost"
+                size="icon"
+                class="group text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                aria-label="Ouvrir la recherche"
+                data-tour="header-search"
+            >
                 <Search class="size-[18px] transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12" aria-hidden="true" />
             </Button>
         </DialogTrigger>

@@ -2,6 +2,10 @@
 import { cn } from '@/lib/utils';
 import type { HTMLAttributes } from 'vue';
 
+defineOptions({
+    inheritAttrs: false,
+});
+
 interface Props {
     title: string;
     description?: string;
@@ -13,7 +17,7 @@ defineProps<Props>();
 </script>
 
 <template>
-    <div :class="cn('flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between', $props.class)">
+    <div v-bind="$attrs" :class="cn('flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between', $props.class)">
         <div class="min-w-0">
             <p
                 v-if="eyebrow"

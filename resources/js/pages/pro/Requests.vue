@@ -74,6 +74,8 @@ const applyFilter = () => {
         },
     );
 };
+
+const pageUrl = (page: number) => route('pro.requests.index', { status: status.value || undefined, page });
 </script>
 
 <template>
@@ -164,11 +166,24 @@ const applyFilter = () => {
                         <span class="mx-auto flex size-10 items-center justify-center rounded-xl bg-muted text-muted-foreground">
                             <Inbox class="size-5" aria-hidden="true" />
                         </span>
-                        <p class="mt-3 text-sm font-medium text-foreground">Aucune demande pour le moment</p>
+                        <p class="mt-3 text-sm font-medium text-foreground">{{ status ? 'Aucune demande pour ce filtre' : 'Aucune demande pour le moment' }}</p>
                         <p class="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
-                            Les demandes adressées à vos profils vérifiés apparaîtront ici.
+                            {{ status ? 'Essayez un autre statut ou réinitialisez le filtre.' : 'Les demandes adressées à vos profils vérifiés apparaîtront ici.' }}
                         </p>
+                        <Button v-if="status" variant="outline" size="sm" class="mt-4" @click="status = ''; applyFilter()">Réinitialiser</Button>
                     </div>
+
+                    <nav v-if="requests.last_page > 1" class="mt-4 flex items-center justify-between gap-3" aria-label="Pagination des demandes">
+                        <p class="text-xs text-muted-foreground">Page {{ requests.current_page }} sur {{ requests.last_page }}</p>
+                        <div class="flex gap-2">
+                            <Button as-child variant="outline" size="sm" :class="requests.current_page <= 1 ? 'pointer-events-none opacity-50' : ''">
+                                <Link :href="pageUrl(requests.current_page - 1)">Précédent</Link>
+                            </Button>
+                            <Button as-child variant="outline" size="sm" :class="requests.current_page >= requests.last_page ? 'pointer-events-none opacity-50' : ''">
+                                <Link :href="pageUrl(requests.current_page + 1)">Suivant</Link>
+                            </Button>
+                        </div>
+                    </nav>
                 </CardContent>
             </Card>
         </div>

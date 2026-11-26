@@ -110,7 +110,9 @@ const benefits = [
                     <slot />
 
                     <p class="mt-8 text-center text-xs leading-relaxed text-muted-foreground">
-                        En continuant, vous acceptez les conditions d’utilisation et la politique de confidentialité de MaliConnect.
+                        En continuant, vous acceptez les conditions d’utilisation et la
+                        <Link :href="route('privacy')" class="font-medium text-brand-700 underline-offset-4 hover:underline dark:text-brand-300">politique de confidentialité</Link>
+                        de MaliConnect.
                     </p>
                 </div>
             </div>

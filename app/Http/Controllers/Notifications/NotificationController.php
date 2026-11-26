@@ -28,6 +28,7 @@ class NotificationController extends Controller
                     ->all(),
                 'current_page' => $notifications->currentPage(),
                 'last_page' => $notifications->lastPage(),
+                'per_page' => $notifications->perPage(),
                 'total' => $notifications->total(),
             ],
             'unreadCount' => $request->user()->unreadNotifications()->count(),

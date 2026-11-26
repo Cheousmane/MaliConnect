@@ -29,7 +29,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware(['auth', 'verified', 'active', 'role:super-admin|admin'])
+Route::middleware(['auth', 'verified', 'active', 'role:super-admin|admin', 'throttle:120,1'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {

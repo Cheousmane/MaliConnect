@@ -110,6 +110,86 @@ class DashboardController extends Controller
             ],
         ];
 
+        $oldestPendingDays = static function ($query): ?int {
+            $date = $query->min('created_at');
+            return $date ? now()->diffInDays($date) : null;
+        };
+
+        $pending = [
+            'profiles' => ProviderProfile::query()->pendingReview()->count(),
+            'businesses' => Business::query()->where('status', 'pending')->count(),
+            'reviews' => ProviderReview::query()->pending()->count(),
+            'reports' => Report::query()->open()->count(),
+            'payments' => $subscriptions['pending_payments'],
+            'oldest_profiles_days' => $oldestPendingDays(ProviderProfile::query()->pendingReview()),
+            'oldest_businesses_days' => $oldestPendingDays(Business::query()->where('status', 'pending')),
+            'oldest_reviews_days' => $oldestPendingDays(ProviderReview::query()->pending()),
+            'oldest_reports_days' => $oldestPendingDays(Report::query()->open()),
+            'oldest_payments_days' => $oldestPendingDays(Payment::query()->where('status', PaymentStatus::Pending)),
+        ];
+
+        $monthStart = now()->startOfMonth();
+        $prevMonthStart = now()->subMonthNoOverflow()->startOfMonth();
+        $prevMonthEnd = now()->subMonthNoOverflow()->endOfMonth();
+
+        $trend = fn ($currentQuery, $previousQuery): array => [
+            'current' => (float) $currentQuery,
+            'previous' => (float) $previousQuery,
+        ];
+
+        $trends = [
+            'users' => $trend(
+                User::query()->where('created_at', '>=', $monthStart)->count(),
+                User::query()->whereBetween('created_at', [$prevMonthStart, $prevMonthEnd])->count(),
+            ),
+            'requests' => $trend(
+                ServiceRequest::query()->where('created_at', '>=', $monthStart)->count(),
+                ServiceRequest::query()->whereBetween('created_at', [$prevMonthStart, $prevMonthEnd])->count(),
+            ),
+            'bookings' => $trend(
+                ProviderBooking::query()->where('created_at', '>=', $monthStart)->count(),
+                ProviderBooking::query()->whereBetween('created_at', [$prevMonthStart, $prevMonthEnd])->count(),
+            ),
+            'revenue' => $trend(
+                (float) Payment::query()->paid()->whereBetween('paid_at', [$monthStart, now()])->sum('amount'),
+                (float) Payment::query()->paid()->whereBetween('paid_at', [$prevMonthStart, $prevMonthEnd])->sum('amount'),
+            ),
+        ];
+
+        $alerts = [];
+        if ($pending['payments'] > 0) {
+            $alerts[] = [
+                'tone' => 'warning',
+                'title' => 'Paiements à vérifier',
+                'description' => $pending['payments'].' paiement(s) en attente, total '.number_format($subscriptions['pending_payments_amount'], 0, ',', ' ').' FCFA.',
+                'href' => route('admin.payments.index', ['status' => 'pending']),
+            ];
+        }
+        if ($subscriptions['past_due'] > 0) {
+            $alerts[] = [
+                'tone' => 'danger',
+                'title' => 'Abonnements en retard',
+                'description' => $subscriptions['past_due'].' abonnement(s) en retard de paiement.',
+                'href' => route('admin.subscriptions.index'),
+            ];
+        }
+        if ($pending['profiles'] > 0) {
+            $alerts[] = [
+                'tone' => ($pending['oldest_profiles_days'] ?? 0) >= 3 ? 'danger' : 'warning',
+                'title' => 'Profils à vérifier',
+                'description' => $pending['profiles'].' profil(s) en attente'.(($pending['oldest_profiles_days'] ?? null) !== null ? ', plus ancien depuis '.$pending['oldest_profiles_days'].' j.' : '.'),
+                'href' => route('admin.provider-profiles.index'),
+            ];
+        }
+        if ($pending['reports'] > 0) {
+            $alerts[] = [
+                'tone' => 'warning',
+                'title' => 'Signalements ouverts',
+                'description' => $pending['reports'].' signalement(s) à traiter.',
+                'href' => route('admin.reports.index'),
+            ];
+        }
+
         return Inertia::render('admin/Dashboard', [
             'metrics' => [
                 [
@@ -183,12 +263,9 @@ class DashboardController extends Controller
                 'monthly' => $monthlyRevenue,
             ],
             'subscriptions' => $subscriptions,
-            'pending' => [
-                'profiles' => ProviderProfile::query()->pendingReview()->count(),
-                'businesses' => Business::query()->where('status', 'pending')->count(),
-                'reviews' => ProviderReview::query()->pending()->count(),
-                'reports' => Report::query()->open()->count(),
-            ],
+            'pending' => $pending,
+            'alerts' => $alerts,
+            'trends' => $trends,
             'recentRequests' => ServiceRequest::query()
                 ->with(['customer:id,name', 'providerProfile:id,business_name'])
                 ->latest()
@@ -253,6 +330,7 @@ class DashboardController extends Controller
                 ->map(fn (AdminAuditLog $log) => [
                     'id' => $log->id,
                     'action' => $log->action,
+                    'action_label' => $log->actionLabel(),
                     'description' => $log->description,
                     'actor' => $log->actor?->name,
                     'created_at' => $log->created_at?->toIso8601String(),

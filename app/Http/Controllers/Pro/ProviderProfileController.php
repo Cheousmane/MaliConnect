@@ -41,8 +41,11 @@ class ProviderProfileController extends Controller
 
         $user = $request->user();
 
+        $status = (string) $request->string('status');
+
         $profiles = $this->manageableProfilesQuery($user)
             ->with(['category', 'business'])
+            ->when($status !== '', fn ($query) => $query->where('status', $status))
             ->latest()
             ->paginate(9)
             ->withQueryString();
@@ -55,6 +58,7 @@ class ProviderProfileController extends Controller
                 'total' => $profiles->total(),
             ],
             'statuses' => $this->statuses(),
+            'filters' => ['status' => $status],
         ]);
     }
 
@@ -287,7 +291,7 @@ class ProviderProfileController extends Controller
         }
 
         $validated = $request->validate([
-            'media' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'media' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096', 'dimensions:max_width=4096,max_height=4096'],
             'type' => ['nullable', 'string', 'in:photo,realisation,cover'],
             'caption' => ['nullable', 'string', 'max:200'],
         ]);
@@ -506,6 +510,7 @@ class ProviderProfileController extends Controller
                 'slug' => $profile->slug,
                 'description' => $profile->description,
                 'logo_path' => $profile->logo_path,
+                'logo_url' => $profile->logo_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($profile->logo_path) : null,
                 'phone' => $profile->phone,
                 'whatsapp' => $profile->whatsapp,
                 'email' => $profile->email,

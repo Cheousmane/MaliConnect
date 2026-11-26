@@ -199,6 +199,7 @@ const activities = computed(() =>
         <div class="space-y-6">
             <PageHeader
                 v-reveal
+                data-tour="dashboard-header"
                 eyebrow="Tableau de bord"
                 :title="`Bonjour, ${firstName} 👋`"
                 description="Voici un aperçu de votre activité et des opportunités qui vous attendent aujourd’hui."

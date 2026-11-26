@@ -52,7 +52,7 @@ abstract class ProviderProfileRequest extends FormRequest
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'years_experience' => ['nullable', 'integer', 'between:0,80'],
             'response_time_hours' => ['nullable', 'integer', 'between:0,168'],
-            'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048', 'dimensions:max_width=2048,max_height=2048'],
         ];
     }
 }

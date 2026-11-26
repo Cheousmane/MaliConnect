@@ -16,6 +16,7 @@ use App\Models\ServiceRequest;
 use App\Models\ServiceRequestAttachment;
 use App\Models\ServiceRequestQuote;
 use App\Notifications\NewBookingNotification;
+use App\Notifications\NewMessageNotification;
 use App\Notifications\NewServiceRequestNotification;
 use App\Notifications\QuoteAcceptedNotification;
 use App\Notifications\QuoteRejectedNotification;
@@ -40,12 +41,15 @@ class ServiceRequestController extends Controller
     public function index(Request $request): Response
     {
         $user = $request->user();
+        $status = (string) $request->string('status');
 
         $requests = ServiceRequest::query()
             ->with(['providerProfile', 'quotes', 'bookings'])
             ->where('customer_id', $user->id)
+            ->when($status !== '', fn ($query) => $query->where('status', $status))
             ->latest()
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
 
         $bookings = $user->providerBookings()
             ->with(['providerProfile', 'service'])
@@ -72,6 +76,11 @@ class ServiceRequestController extends Controller
                 'professional' => $booking->providerProfile?->business_name,
                 'service' => $booking->service?->name,
             ])->values()->all(),
+            'filters' => ['status' => $status],
+            'statuses' => collect(ServiceRequestStatus::cases())
+                ->map(fn (ServiceRequestStatus $item) => ['value' => $item->value, 'label' => $item->label()])
+                ->values()
+                ->all(),
         ]);
     }
 
@@ -256,7 +265,7 @@ class ServiceRequestController extends Controller
             'quotes.providerProfile',
             'messages.author',
             'attachments',
-            'bookings',
+            'bookings.review',
         ]);
 
         $booking = $serviceRequest->bookings->first();
@@ -318,6 +327,14 @@ class ServiceRequestController extends Controller
                     'starts_at' => $booking->starts_at?->toIso8601String(),
                     'status' => $booking->status->value,
                     'status_label' => $booking->status->label(),
+                    'status_tone' => $booking->status->tone(),
+                    'review' => $booking->review ? [
+                        'id' => $booking->review->id,
+                        'status' => $booking->review->status->value,
+                        'status_label' => $booking->review->status->label(),
+                        'status_tone' => $booking->review->status->tone(),
+                    ] : null,
+                    'can_review' => $request->user()->can('review', $booking),
                 ] : null,
             ],
             'canCancel' => $request->user()->can('cancel', $serviceRequest),
@@ -338,6 +355,7 @@ class ServiceRequestController extends Controller
         $this->authorize('view', $serviceRequest);
 
         abort_unless((int) $attachment->service_request_id === (int) $serviceRequest->id, 404);
+        abort_if(str_contains($attachment->path, '..'), 404);
 
         foreach (array_filter(array_unique([$attachment->disk, 'local', 'public'])) as $disk) {
             $storage = Storage::disk($disk);
@@ -353,7 +371,7 @@ class ServiceRequestController extends Controller
     /**
      * Ajoute un message à la demande.
      */
-    public function storeMessage(StoreMessageRequest $request, ServiceRequest $serviceRequest): RedirectResponse
+    public function storeMessage(StoreMessageRequest $request, ServiceRequest $serviceRequest, NotificationDispatcher $notifications): RedirectResponse
     {
         $this->authorize('view', $serviceRequest);
 
@@ -361,10 +379,20 @@ class ServiceRequestController extends Controller
             return back()->with('error', 'Cette demande est close : aucun message ne peut être ajouté.');
         }
 
+        $body = $request->validated('body');
+
         $serviceRequest->messages()->create([
             'author_id' => $request->user()->id,
-            'body' => $request->validated('body'),
+            'body' => $body,
         ]);
+
+        $serviceRequest->loadMissing(['customer', 'providerProfile']);
+        if ($serviceRequest->providerProfile !== null) {
+            $notifications->toProfileManagers(
+                $serviceRequest->providerProfile,
+                new NewMessageNotification($serviceRequest, $body),
+            );
+        }
 
         return back()->with('success', 'Votre message a été envoyé.');
     }

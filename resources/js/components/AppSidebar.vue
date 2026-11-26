@@ -15,12 +15,14 @@ import {
     CalendarClock,
     ClipboardCheck,
     ClipboardList,
+    CreditCard,
+    FolderTree,
     Heart,
+    Layers,
     LayoutDashboard,
     LifeBuoy,
     MessageSquare,
     ReceiptText,
-    ScrollText,
     ShieldCheck,
     Star,
     Store,
@@ -41,29 +43,61 @@ const props = withDefaults(defineProps<Props>(), {
 
 const adminGroups: NavGroup[] = [
     {
-        title: 'Administration',
+        title: 'Modération',
         items: [
             { title: 'Tableau de bord', href: '/admin', icon: LayoutDashboard },
             { title: 'Profils à vérifier', href: '/admin/provider-profiles', icon: ClipboardCheck },
-            { title: 'Utilisateurs', href: '/admin/users', icon: Users },
             { title: 'Entreprises', href: '/admin/businesses', icon: Building2 },
-            { title: 'Professionnels', href: '/admin/professionals', icon: BriefcaseBusiness },
-            { title: 'Catégories', href: '/admin/categories', icon: ScrollText },
-            { title: 'Sous-catégories', href: '/admin/sous-categories', icon: ScrollText },
-            { title: 'Services', href: '/admin/services', icon: Store },
+            { title: 'Modération des avis', href: '/admin/avis', icon: Star },
+            { title: 'Signalements', href: '/admin/signalements', icon: LifeBuoy },
+        ],
+    },
+    {
+        title: 'Opérations',
+        items: [
+            { title: 'Utilisateurs', href: '/admin/users', icon: Users },
             { title: 'Demandes', href: '/admin/demandes', icon: ClipboardList },
             { title: 'Réservations', href: '/admin/reservations', icon: CalendarClock },
-            { title: 'Modération des avis', href: '/admin/avis', icon: Star },
+        ],
+    },
+    {
+        title: 'Catalogue',
+        items: [
+            { title: 'Professionnels', href: '/admin/professionals', icon: BriefcaseBusiness },
+            { title: 'Catégories', href: '/admin/categories', icon: FolderTree },
+            { title: 'Sous-catégories', href: '/admin/sous-categories', icon: Layers },
+            { title: 'Services', href: '/admin/services', icon: Store },
+        ],
+    },
+    {
+        title: 'Monétisation',
+        items: [
             { title: 'Formules', href: '/admin/formules', icon: Tags },
             { title: 'Abonnements', href: '/admin/abonnements', icon: Wallet },
-            { title: 'Paiements', href: '/admin/paiements', icon: Wallet },
-            { title: 'Signalements', href: '/admin/signalements', icon: LifeBuoy },
-            { title: 'Journal d’audit', href: '/admin/journal', icon: ShieldCheck },
+            { title: 'Paiements', href: '/admin/paiements', icon: CreditCard },
         ],
+    },
+    {
+        title: 'Système',
+        items: [{ title: 'Journal d’audit', href: '/admin/journal', icon: ShieldCheck }],
     },
 ];
 
 const page = usePage<SharedData>();
+const unreadNotifications = computed(() => page.props.unreadNotificationsCount ?? 0);
+const unreadMessages = computed(() => page.props.unreadMessageNotificationsCount ?? 0);
+const notificationItem = computed<NavItem>(() => ({
+    title: 'Notifications',
+    href: '/notifications',
+    icon: Bell,
+    ...(unreadNotifications.value > 0 ? { badge: String(unreadNotifications.value) } : {}),
+}));
+const messageItem = computed<NavItem>(() => ({
+    title: 'Messages',
+    href: '/pro/demandes',
+    icon: MessageSquare,
+    ...(unreadMessages.value > 0 ? { badge: String(unreadMessages.value) } : {}),
+}));
 
 const groups = computed<NavGroup[]>(() => {
     if (props.variant === 'admin') {
@@ -74,54 +108,71 @@ const groups = computed<NavGroup[]>(() => {
     const isProfessional = permissions.includes('provider_profiles.create') || permissions.includes('service_requests.respond');
     const isCustomer = permissions.includes('service_requests.create');
 
-    const items: NavItem[] = [{ title: 'Tableau de bord', href: '/dashboard', icon: LayoutDashboard }];
-
     if (isProfessional) {
-        items.push(
-            { title: 'Mes profils', href: '/pro/profiles', icon: Store },
-            { title: 'Fiches tarifaires', href: '/pro/tarifs', icon: ReceiptText },
-            { title: 'Mon entreprise', href: '/pro/businesses', icon: Building2 },
-            { title: 'Demandes', href: '/pro/demandes', icon: ClipboardList },
-            { title: 'Réservations', href: '/pro/reservations', icon: CalendarClock },
-            { title: 'Avis reçus', href: '/pro/avis', icon: Star },
-            { title: 'Mon abonnement', href: '/pro/abonnement', icon: Wallet },
-            { title: 'Formules', href: '/pro/abonnement/offres', icon: Tags },
-            { title: 'Messages', href: '#', icon: MessageSquare, disabled: true, badge: 'Bientôt' },
-            { title: 'Notifications', href: '/notifications', icon: Bell },
-        );
+        return [
+            {
+                title: 'Activité',
+                items: [
+                    { title: 'Tableau de bord', href: '/dashboard', icon: LayoutDashboard },
+                    { title: 'Mes profils', href: '/pro/profiles', icon: Store },
+                    { title: 'Demandes', href: '/pro/demandes', icon: ClipboardList },
+                    { title: 'Réservations', href: '/pro/reservations', icon: CalendarClock },
+                    { title: 'Avis reçus', href: '/pro/avis', icon: Star },
+                ],
+            },
+            {
+                title: 'Offre',
+                items: [
+                    { title: 'Fiches tarifaires', href: '/pro/tarifs', icon: ReceiptText },
+                    { title: 'Mon entreprise', href: '/pro/businesses', icon: Building2 },
+                ],
+            },
+            {
+                title: 'Compte pro',
+                items: [
+                    { title: 'Mon abonnement', href: '/pro/abonnement', icon: Wallet },
+                    { title: 'Formules', href: '/pro/abonnement/offres', icon: Tags },
+                    messageItem.value,
+                    notificationItem.value,
+                ],
+            },
+        ];
     }
 
     if (isCustomer) {
-        items.push(
-            { title: 'Mes demandes', href: '/demandes', icon: ClipboardList },
-            { title: 'Mes réservations', href: '/reservations', icon: CalendarClock },
-            { title: 'Mes favoris', href: '/favoris', icon: Heart },
-            { title: 'Mes avis', href: '/avis', icon: Star },
-            { title: 'Notifications', href: '/notifications', icon: Bell },
-        );
-    }
-
-    // Cas général : au moins l'accès aux notifications.
-    if (!isProfessional && !isCustomer) {
-        items.push({ title: 'Notifications', href: '/notifications', icon: Bell });
+        return [
+            {
+                title: 'Mon activité',
+                items: [
+                    { title: 'Tableau de bord', href: '/dashboard', icon: LayoutDashboard },
+                    { title: 'Mes demandes', href: '/demandes', icon: ClipboardList },
+                    { title: 'Mes réservations', href: '/reservations', icon: CalendarClock },
+                    { title: 'Mes favoris', href: '/favoris', icon: Heart },
+                    { title: 'Mes avis', href: '/avis', icon: Star },
+                ],
+            },
+            {
+                title: 'Compte',
+                items: [notificationItem.value],
+            },
+        ];
     }
 
     return [
         {
-            title: isProfessional ? 'Espace professionnel' : 'Espace client',
-            items,
+            title: 'Espace',
+            items: [
+                { title: 'Tableau de bord', href: '/dashboard', icon: LayoutDashboard },
+                notificationItem.value,
+            ],
         },
     ];
 });
 
 const workspaceLabel = computed(() => {
-    if (props.variant === 'admin') {
-        return 'Administration';
-    }
-
+    if (props.variant === 'admin') return 'Administration';
     const permissions = page.props.auth.permissions;
     const isProfessional = permissions.includes('provider_profiles.create') || permissions.includes('service_requests.respond');
-
     return isProfessional ? 'Espace professionnel' : 'Espace client';
 });
 
@@ -158,7 +209,7 @@ const { setOpenMobile } = useSidebar();
             </div>
         </SidebarHeader>
 
-        <SidebarContent class="gap-0 py-2">
+        <SidebarContent class="gap-0 py-2" data-tour="sidebar-nav">
             <NavMain :groups="groups" />
         </SidebarContent>
 
@@ -169,20 +220,32 @@ const { setOpenMobile } = useSidebar();
             </div>
 
             <div
-                class="rounded-xl border border-brand-100/80 bg-brand-50/70 p-3.5 group-data-[collapsible=icon]:hidden dark:border-brand-900/70 dark:bg-brand-950/30"
+                class="rounded-xl border border-brand-100/80 bg-brand-50/70 p-3 group-data-[collapsible=icon]:hidden dark:border-brand-900/70 dark:bg-brand-950/30"
             >
                 <div class="flex items-center gap-2 text-[11px] font-semibold text-brand-800 dark:text-brand-200">
                     <LifeBuoy class="size-4 text-brand-600 dark:text-brand-400" aria-hidden="true" />
                     Besoin d’aide ?
                 </div>
-                <p class="mt-1 text-[11px] leading-relaxed text-muted-foreground">Notre équipe vous accompagne dans vos premiers pas.</p>
-                <Button as-child variant="soft" size="sm" class="mt-2.5 w-full justify-between text-[11px]">
+                <p class="mt-1 text-[11px] leading-relaxed text-muted-foreground">Notre équipe vous accompagne.</p>
+                <Button as-child variant="soft" size="sm" class="mt-2 w-full justify-between text-[11px]">
                     <a href="mailto:support@maliconnect.ml">
                         Contacter le support
                         <ArrowUpRight class="size-3.5" aria-hidden="true" />
                     </a>
                 </Button>
             </div>
+
+            <Button
+                as-child
+                variant="ghost"
+                size="icon"
+                class="hidden size-8 text-sidebar-foreground/70 hover:text-sidebar-foreground group-data-[collapsible=icon]:flex"
+                title="Contacter le support"
+            >
+                <a href="mailto:support@maliconnect.ml" aria-label="Contacter le support">
+                    <LifeBuoy class="size-4" aria-hidden="true" />
+                </a>
+            </Button>
 
             <NavUser />
         </SidebarFooter>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { cn } from '@/lib/utils';
 import type { StatTrend, StatusTone } from '@/types';
+import { Link } from '@inertiajs/vue3';
 import type { LucideIcon } from 'lucide-vue-next';
 import { ArrowDownRight, ArrowUpRight, Minus } from 'lucide-vue-next';
 import { computed } from 'vue';
@@ -13,6 +14,7 @@ interface Props {
     description?: string;
     sparkline?: number[];
     tone?: StatusTone;
+    href?: string;
     class?: string;
 }
 
@@ -65,10 +67,13 @@ const sparklinePaths = computed(() => {
 </script>
 
 <template>
-    <div
+    <component
+        :is="href ? Link : 'div'"
+        :href="href"
         :class="
             cn(
-                'group relative overflow-hidden rounded-xl border border-border/80 bg-card p-5 shadow-soft transition-all duration-300 hover:-translate-y-0.5 hover:shadow-card',
+                'group relative block overflow-hidden rounded-xl border border-border/80 bg-card p-5 shadow-soft transition-all duration-300 hover:-translate-y-0.5 hover:shadow-card',
+                href ? 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring' : '',
                 props.class,
             )
         "
@@ -108,5 +113,5 @@ const sparklinePaths = computed(() => {
                 <path :d="sparklinePaths.line" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
         </div>
-    </div>
+    </component>
 </template>

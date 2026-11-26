@@ -9,8 +9,8 @@ import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem, StatusTone } from '@/types';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
-import { ArrowLeft, CalendarClock, LoaderCircle, MapPin, Paperclip, Send, Wallet, XCircle } from 'lucide-vue-next';
-import { ref } from 'vue';
+import { ArrowLeft, CalendarClock, LoaderCircle, MapPin, Paperclip, Send, Star, Wallet, XCircle } from 'lucide-vue-next';
+import { computed, ref } from 'vue';
 
 type Quote = {
     id: number;
@@ -22,6 +22,7 @@ type Quote = {
     status_label: string;
     status_tone: string;
     valid_until: string | null;
+    rejection_reason: string | null;
     created_at: string | null;
 };
 
@@ -54,7 +55,16 @@ type RequestDetail = {
     quotes: Quote[];
     messages: Message[];
     attachments: Array<{ id: number; name: string; type: string; url: string }>;
-    booking: { id: number; reference: string; starts_at: string | null; status: string; status_label: string } | null;
+    booking: {
+        id: number;
+        reference: string;
+        starts_at: string | null;
+        status: string;
+        status_label: string;
+        status_tone: string;
+        review: { id: number; status: string; status_label: string; status_tone: string } | null;
+        can_review: boolean;
+    } | null;
 };
 
 type Props = {
@@ -86,6 +96,12 @@ const bookingForm = useForm({
 });
 
 const startsAtInput = ref('');
+const minBookingDate = computed(() => {
+    const now = new Date();
+    now.setSeconds(0, 0);
+    const offsetMs = now.getTimezoneOffset() * 60_000;
+    return new Date(now.getTime() - offsetMs).toISOString().slice(0, 16);
+});
 
 const rejectingQuoteId = ref<number | null>(null);
 const rejectionReason = ref('');
@@ -123,9 +139,9 @@ const acceptQuote = (quote: Quote) => {
         return;
     }
 
-    // S'assurer que la date est dans le futur
+    // S'assurer que la date est dans le futur (tolérance d'1 minute pour la saisie datetime-local)
     const selectedDate = new Date(startsAtInput.value);
-    if (selectedDate <= new Date()) {
+    if (Number.isNaN(selectedDate.getTime()) || selectedDate.getTime() < Date.now() - 60_000) {
         alert('La date et l\'heure doivent être dans le futur.');
         return;
     }
@@ -279,6 +295,7 @@ const rejectQuote = (quote: Quote) => {
                                             <Input
                                                 v-model="startsAtInput"
                                                 type="datetime-local"
+                                                :min="minBookingDate"
                                                 class="h-9 w-auto text-xs"
                                                 aria-label="Date et heure du créneau souhaité"
                                             />
@@ -328,16 +345,38 @@ const rejectQuote = (quote: Quote) => {
                                             <Button type="button" variant="ghost" size="sm" @click="cancelRejection">Annuler</Button>
                                         </div>
                                     </form>
+
+                                    <div v-if="quote.rejection_reason" class="mt-3 w-full rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+                                        <p class="font-medium">Motif du refus :</p>
+                                        <p class="mt-0.5 whitespace-pre-line">{{ quote.rejection_reason }}</p>
+                                    </div>
                                 </li>
                             </ul>
 
                             <p v-else class="text-sm text-muted-foreground">Aucun devis reçu pour le moment.</p>
 
-                            <div v-if="request.booking" class="rounded-xl border border-brand-200 bg-brand-50/60 p-4">
-                                <p class="text-sm font-medium text-brand-900 dark:text-brand-100">Réservation {{ request.booking.reference }}</p>
-                                <p class="mt-1 text-xs text-brand-800/80 dark:text-brand-200/80">
-                                    {{ formatDate(request.booking.starts_at) }} · {{ request.booking.status_label }}
-                                </p>
+                            <div v-if="request.booking" class="flex flex-wrap items-start justify-between gap-3 rounded-xl border border-brand-200 bg-brand-50/60 p-4">
+                                <div class="min-w-0">
+                                    <p class="text-sm font-medium text-brand-900 dark:text-brand-100">Réservation {{ request.booking.reference }}</p>
+                                    <p class="mt-1 text-xs text-brand-800/80 dark:text-brand-200/80">
+                                        {{ formatDate(request.booking.starts_at) }} · {{ request.booking.status_label }}
+                                    </p>
+                                    <div class="mt-2 flex flex-wrap items-center gap-2">
+                                        <StatusBadge
+                                            v-if="request.booking.review"
+                                            :tone="tone(request.booking.review.status_tone)"
+                                            :label="`Avis : ${request.booking.review.status_label}`"
+                                            :icon="Star"
+                                        />
+                                    </div>
+                                </div>
+
+                                <Button v-if="request.booking.can_review" as-child variant="brand" size="sm">
+                                    <Link :href="route('reviews.create', request.booking.id)">
+                                        <Star class="size-4" aria-hidden="true" />
+                                        Laisser un avis
+                                    </Link>
+                                </Button>
                             </div>
                         </CardContent>
                     </Card>

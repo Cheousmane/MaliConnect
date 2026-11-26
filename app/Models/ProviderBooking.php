@@ -110,7 +110,7 @@ class ProviderBooking extends Model
             return false;
         }
 
-        if ($this->starts_at === null || $this->starts_at->isFuture()) {
+        if ($this->starts_at === null) {
             return false;
         }
 

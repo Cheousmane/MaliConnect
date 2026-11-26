@@ -212,6 +212,7 @@ class SubscriptionController extends Controller
         $this->authorize('downloadProof', $payment);
 
         abort_unless($proof->payment_id === $payment->id, 404);
+        abort_if(str_contains($proof->path, '..'), 404);
         abort_unless(Storage::disk($proof->disk)->exists($proof->path), 404);
 
         return Storage::disk($proof->disk)->download($proof->path, $proof->original_name);

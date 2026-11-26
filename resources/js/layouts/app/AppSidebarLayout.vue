@@ -4,6 +4,7 @@ import AppShell from '@/components/AppShell.vue';
 import AppSidebar from '@/components/AppSidebar.vue';
 import AppSidebarHeader from '@/components/AppSidebarHeader.vue';
 import FlashMessages from '@/components/FlashMessages.vue';
+import GuidedTour from '@/components/GuidedTour.vue';
 import type { BreadcrumbItemType } from '@/types';
 
 interface Props {
@@ -30,5 +31,6 @@ withDefaults(defineProps<Props>(), {
                 </div>
             </div>
         </AppContent>
+        <GuidedTour />
     </AppShell>
 </template>

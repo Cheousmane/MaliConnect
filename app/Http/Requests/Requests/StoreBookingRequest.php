@@ -26,9 +26,19 @@ class StoreBookingRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'starts_at' => ['required', 'date', 'after:now'],
+            'starts_at' => ['required', 'date', 'after:'.now()->subMinute()->format('Y-m-d H:i:s')],
             'duration_minutes' => ['nullable', 'integer', 'min:15', 'max:1440'],
             'notes' => ['nullable', 'string', 'max:1000'],
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'starts_at.after' => 'La date et l\'heure doivent être dans le futur.',
         ];
     }
 }

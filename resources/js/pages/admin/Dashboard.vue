@@ -8,18 +8,26 @@ import type { BreadcrumbItem, StatusTone } from '@/types';
 import { Head, Link } from '@inertiajs/vue3';
 import type { LucideIcon } from 'lucide-vue-next';
 import {
+    AlertTriangle,
+    ArrowDownRight,
+    ArrowUpRight,
     Banknote,
     BriefcaseBusiness,
     Building2,
     CalendarClock,
+    CheckCircle2,
     ClipboardList,
     Clock3,
     CreditCard,
+    FileText,
+    Minus,
     RefreshCw,
+    ShieldAlert,
     Store,
     TrendingUp,
     Users,
     Wallet,
+    XCircle,
 } from 'lucide-vue-next';
 import { computed } from 'vue';
 
@@ -61,7 +69,15 @@ type Props = {
         businesses: number;
         reviews: number;
         reports: number;
+        payments: number;
+        oldest_profiles_days: number | null;
+        oldest_businesses_days: number | null;
+        oldest_reviews_days: number | null;
+        oldest_reports_days: number | null;
+        oldest_payments_days: number | null;
     };
+    alerts: Array<{ tone: string; title: string; description: string; href: string }>;
+    trends: Record<string, { current: number; previous: number }>;
     recentRequests: Array<{
         id: number;
         reference: string;
@@ -98,6 +114,7 @@ type Props = {
     activity: Array<{
         id: number;
         action: string;
+        action_label: string;
         description: string;
         actor: string | null;
         created_at: string | null;
@@ -152,7 +169,62 @@ const planRows = computed(() => {
     }));
 });
 
-const pendingTotal = computed(() => props.pending.profiles + props.pending.businesses + props.pending.reviews + props.pending.reports);
+const pendingTotal = computed(
+    () => props.pending.profiles + props.pending.businesses + props.pending.reviews + props.pending.reports + props.pending.payments,
+);
+
+const trendFor = (key: string) => {
+    const t = props.trends?.[key];
+    if (!t) return null;
+    const diff = t.current - t.previous;
+    const pct = t.previous > 0 ? Math.round((diff / t.previous) * 100) : t.current > 0 ? 100 : 0;
+    return { diff, pct, direction: diff > 0 ? 'up' : diff < 0 ? 'down' : 'flat' as const };
+};
+
+const auditIcon = (action: string): LucideIcon => {
+    if (action.includes('approved') || action.includes('reactivated')) return CheckCircle2;
+    if (action.includes('rejected') || action.includes('refused') || action.includes('cancelled')) return XCircle;
+    if (action.includes('suspended') || action.includes('report')) return ShieldAlert;
+    if (action.includes('payment')) return CreditCard;
+    if (action.includes('user') || action.includes('role')) return Users;
+    if (action.includes('plan') || action.includes('subscription')) return Wallet;
+    if (action.includes('category') || action.includes('service')) return FileText;
+    return Store;
+};
+
+const auditTone = (action: string): string => {
+    if (action.includes('approved') || action.includes('reactivated')) return 'text-success bg-success/10';
+    if (action.includes('rejected') || action.includes('refused') || action.includes('cancelled') || action.includes('suspended'))
+        return 'text-danger bg-danger/10';
+    if (action.includes('payment')) return 'text-amber-600 bg-amber-50 dark:text-amber-300 dark:bg-amber-950/40';
+    return 'text-muted-foreground bg-muted';
+};
+
+const metricTrend = (key: string) => {
+    const map: Record<string, string> = { users: 'users', requests: 'requests', bookings: 'bookings', revenue: 'revenue' };
+    const trendKey = map[key];
+    if (!trendKey) return undefined;
+    const t = trendFor(trendKey);
+    if (!t) return undefined;
+    const sign = t.pct > 0 ? '+' : '';
+    const direction = t.direction === 'flat' ? 'neutral' : t.direction;
+    return { value: `${sign}${t.pct}% vs mois dernier`, direction: direction as 'up' | 'down' | 'neutral' };
+};
+
+const metricHref = (key: string): string | undefined => {
+    const map: Record<string, string> = {
+        users: route('admin.users.index'),
+        professionals: route('admin.provider-profiles.index'),
+        businesses: route('admin.businesses.index'),
+        pending_profiles: route('admin.provider-profiles.index'),
+        requests: route('admin.service-requests.index'),
+        bookings: route('admin.bookings.index'),
+        completed_bookings: route('admin.bookings.index'),
+        active_subscriptions: route('admin.subscriptions.index'),
+        revenue: route('admin.payments.index'),
+    };
+    return map[key];
+};
 </script>
 
 <template>
@@ -160,7 +232,9 @@ const pendingTotal = computed(() => props.pending.profiles + props.pending.busin
 
     <AdminLayout :breadcrumbs="breadcrumbs">
         <div class="space-y-6">
-            <PageHeader v-reveal
+            <PageHeader
+                v-reveal
+                data-tour="admin-dashboard-header"
                 title="Tableau de bord"
                 description="Indicateurs réels de la plateforme : activité, abonnements et revenus encaissés."
             >
@@ -187,6 +261,26 @@ const pendingTotal = computed(() => props.pending.profiles + props.pending.busin
                 </template>
             </PageHeader>
 
+            <div v-if="alerts.length" v-reveal="40" class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                <Link
+                    v-for="alert in alerts"
+                    :key="alert.title"
+                    :href="alert.href"
+                    class="flex items-start gap-3 rounded-xl border border-border/70 bg-card p-4 shadow-soft transition hover:-translate-y-0.5 hover:shadow-card"
+                >
+                    <span
+                        class="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg"
+                        :class="alert.tone === 'danger' ? 'bg-danger/10 text-danger' : 'bg-warning/10 text-amber-600 dark:text-amber-300'"
+                    >
+                        <AlertTriangle class="size-4" aria-hidden="true" />
+                    </span>
+                    <div class="min-w-0">
+                        <p class="text-sm font-semibold text-foreground">{{ alert.title }}</p>
+                        <p class="mt-1 text-xs leading-relaxed text-muted-foreground">{{ alert.description }}</p>
+                    </div>
+                </Link>
+            </div>
+
             <div v-reveal="60" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 <StatCard
                     v-for="metric in metrics"
@@ -196,6 +290,8 @@ const pendingTotal = computed(() => props.pending.profiles + props.pending.busin
                     :description="metric.description"
                     :icon="icons[metric.key]"
                     :tone="tone(metric.tone)"
+                    :trend="metricTrend(metric.key)"
+                    :href="metricHref(metric.key)"
                 />
             </div>
 
@@ -223,7 +319,7 @@ const pendingTotal = computed(() => props.pending.profiles + props.pending.busin
                                 }}</span>
                                 <div class="flex h-24 w-full items-end justify-center">
                                     <div
-                                        class="w-full max-w-14 rounded-t-lg bg-gradient-to-t from-brand-600 to-brand-400 transition-all duration-500"
+                                        class="w-full max-w-14 rounded-t-lg bg-brand-600 transition-all duration-500"
                                         :style="{ height: revenueBar(item.amount) }"
                                         :title="`${item.label} : ${formatMoney(item.amount)}`"
                                     />
@@ -316,32 +412,39 @@ const pendingTotal = computed(() => props.pending.profiles + props.pending.busin
                         <CardDescription>{{ pendingTotal }} élément(s) en attente de décision.</CardDescription>
                     </CardHeader>
                     <CardContent class="space-y-2">
-                        <Link
-                            :href="route('admin.provider-profiles.index')"
-                            class="flex items-center justify-between rounded-lg border border-border/60 px-3 py-2.5 text-sm transition hover:bg-muted"
-                        >
-                            <span class="text-foreground">Profils professionnels</span>
+                        <Link :href="route('admin.provider-profiles.index')" class="flex items-center justify-between rounded-lg border border-border/60 px-3 py-2.5 text-sm transition hover:bg-muted">
+                            <div>
+                                <span class="text-foreground">Profils professionnels</span>
+                                <p v-if="pending.oldest_profiles_days !== null" class="text-[11px] text-muted-foreground">Plus ancien : {{ pending.oldest_profiles_days }} j</p>
+                            </div>
                             <span class="font-semibold text-foreground">{{ pending.profiles }}</span>
                         </Link>
-                        <Link
-                            :href="route('admin.businesses.index')"
-                            class="flex items-center justify-between rounded-lg border border-border/60 px-3 py-2.5 text-sm transition hover:bg-muted"
-                        >
-                            <span class="text-foreground">Entreprises</span>
+                        <Link :href="route('admin.businesses.index')" class="flex items-center justify-between rounded-lg border border-border/60 px-3 py-2.5 text-sm transition hover:bg-muted">
+                            <div>
+                                <span class="text-foreground">Entreprises</span>
+                                <p v-if="pending.oldest_businesses_days !== null" class="text-[11px] text-muted-foreground">Plus ancien : {{ pending.oldest_businesses_days }} j</p>
+                            </div>
                             <span class="font-semibold text-foreground">{{ pending.businesses }}</span>
                         </Link>
-                        <Link
-                            :href="route('admin.reviews.index')"
-                            class="flex items-center justify-between rounded-lg border border-border/60 px-3 py-2.5 text-sm transition hover:bg-muted"
-                        >
-                            <span class="text-foreground">Avis à modérer</span>
+                        <Link :href="route('admin.reviews.index')" class="flex items-center justify-between rounded-lg border border-border/60 px-3 py-2.5 text-sm transition hover:bg-muted">
+                            <div>
+                                <span class="text-foreground">Avis à modérer</span>
+                                <p v-if="pending.oldest_reviews_days !== null" class="text-[11px] text-muted-foreground">Plus ancien : {{ pending.oldest_reviews_days }} j</p>
+                            </div>
                             <span class="font-semibold text-foreground">{{ pending.reviews }}</span>
                         </Link>
-                        <Link
-                            :href="route('admin.reports.index')"
-                            class="flex items-center justify-between rounded-lg border border-border/60 px-3 py-2.5 text-sm transition hover:bg-muted"
-                        >
-                            <span class="text-foreground">Signalements ouverts</span>
+                        <Link :href="route('admin.payments.index', { status: 'pending' })" class="flex items-center justify-between rounded-lg border border-border/60 px-3 py-2.5 text-sm transition hover:bg-muted">
+                            <div>
+                                <span class="text-foreground">Paiements à vérifier</span>
+                                <p v-if="pending.oldest_payments_days !== null" class="text-[11px] text-muted-foreground">Plus ancien : {{ pending.oldest_payments_days }} j</p>
+                            </div>
+                            <span class="font-semibold text-foreground">{{ pending.payments }}</span>
+                        </Link>
+                        <Link :href="route('admin.reports.index')" class="flex items-center justify-between rounded-lg border border-border/60 px-3 py-2.5 text-sm transition hover:bg-muted">
+                            <div>
+                                <span class="text-foreground">Signalements ouverts</span>
+                                <p v-if="pending.oldest_reports_days !== null" class="text-[11px] text-muted-foreground">Plus ancien : {{ pending.oldest_reports_days }} j</p>
+                            </div>
                             <span class="font-semibold text-foreground">{{ pending.reports }}</span>
                         </Link>
                     </CardContent>
@@ -452,9 +555,14 @@ const pendingTotal = computed(() => props.pending.profiles + props.pending.busin
             </div>
 
             <Card v-reveal="300">
-                <CardHeader>
-                    <CardTitle class="text-base">Journal récent</CardTitle>
-                    <CardDescription>Huit dernières actions sensibles réalisées dans l’administration.</CardDescription>
+                <CardHeader class="flex flex-row items-center justify-between gap-3">
+                    <div>
+                        <CardTitle class="text-base">Journal récent</CardTitle>
+                        <CardDescription>Dernières actions sensibles réalisées dans l’administration.</CardDescription>
+                    </div>
+                    <Link :href="route('admin.audit.index')" class="text-sm font-medium text-brand-700 hover:underline dark:text-brand-300">
+                        Voir tout
+                    </Link>
                 </CardHeader>
                 <CardContent>
                     <div
@@ -469,12 +577,14 @@ const pendingTotal = computed(() => props.pending.profiles + props.pending.busin
                             :key="item.id"
                             class="flex items-start gap-3 border-b border-border/50 pb-3 last:border-0 last:pb-0"
                         >
-                            <span class="mt-1 flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-                                <Store class="size-4" aria-hidden="true" />
+                            <span class="mt-1 flex size-8 shrink-0 items-center justify-center rounded-lg" :class="auditTone(item.action)">
+                                <component :is="auditIcon(item.action)" class="size-4" aria-hidden="true" />
                             </span>
                             <div class="min-w-0 flex-1">
                                 <p class="text-sm text-foreground">{{ item.description }}</p>
-                                <p class="text-xs text-muted-foreground">{{ item.actor ?? 'Système' }} · {{ formatDateTime(item.created_at) }}</p>
+                                <p class="text-xs text-muted-foreground">
+                                    {{ item.action_label }} · {{ item.actor ?? 'Système' }} · {{ formatDateTime(item.created_at) }}
+                                </p>
                             </div>
                         </div>
                     </div>

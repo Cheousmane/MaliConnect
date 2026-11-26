@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import UserInfo from '@/components/UserInfo.vue';
 import { DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { useGuidedTour } from '@/composables/useGuidedTour';
 import type { User } from '@/types';
 import { Link } from '@inertiajs/vue3';
-import { LogOut, Palette, UserRound } from 'lucide-vue-next';
+import { CircleHelp, LogOut, Palette, UserRound } from 'lucide-vue-next';
 
 interface Props {
     user: User;
@@ -13,6 +14,8 @@ interface Props {
 withDefaults(defineProps<Props>(), {
     showSettings: true,
 });
+
+const { restart } = useGuidedTour();
 </script>
 
 <template>
@@ -41,6 +44,13 @@ withDefaults(defineProps<Props>(), {
     </DropdownMenuGroup>
 
     <DropdownMenuSeparator v-if="showSettings" />
+
+    <DropdownMenuItem class="cursor-pointer" @click="restart">
+        <CircleHelp class="size-4 text-muted-foreground" aria-hidden="true" />
+        Visite guidée
+    </DropdownMenuItem>
+
+    <DropdownMenuSeparator />
 
     <DropdownMenuItem :as-child="true" class="text-destructive focus:bg-destructive/10 focus:text-destructive">
         <Link class="flex w-full cursor-pointer items-center gap-2" method="post" :href="route('logout')" as="button">

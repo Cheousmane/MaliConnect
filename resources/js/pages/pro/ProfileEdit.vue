@@ -69,6 +69,7 @@ type Profile = {
     is_publicly_visible: boolean;
     description: string | null;
     logo_path: string | null;
+    logo_url: string | null;
     phone: string | null;
     whatsapp: string | null;
     email: string | null;
@@ -149,6 +150,13 @@ const form = useForm({
 });
 
 const subcategories = computed(() => props.categories.find((category) => category.id === Number(form.category_id))?.subcategories ?? []);
+
+const onLocationResolved = (location: { address: string; city: string; commune: string; quartier: string }) => {
+    if (location.address) form.address = location.address;
+    if (location.city) form.city = location.city;
+    if (location.commune) form.commune = location.commune;
+    if (location.quartier) form.quartier = location.quartier;
+};
 
 // Zones d'intervention.
 const areasForm = useForm({
@@ -458,9 +466,11 @@ const removeAvailability = (index: number) => {
                             :latitude="form.latitude ? Number(form.latitude) : null"
                             :longitude="form.longitude ? Number(form.longitude) : null"
                             interactive
+                            reverse-geocode
                             height="300px"
                             @update:latitude="form.latitude = String($event)"
                             @update:longitude="form.longitude = String($event)"
+                            @resolve="onLocationResolved"
                         />
 
                         <div class="grid gap-4 sm:grid-cols-2">
@@ -473,6 +483,10 @@ const removeAvailability = (index: number) => {
                         </div>
 
                         <FormField label="Logo ou photo" for="logo" :error="form.errors.logo" hint="JPEG, PNG ou WebP, 2 Mo maximum.">
+                            <div v-if="props.profile.logo_url" class="mb-3 flex items-center gap-3">
+                                <img :src="props.profile.logo_url" :alt="`Logo ${props.profile.business_name}`" class="size-16 rounded-xl border border-border/70 object-cover" />
+                                <p class="text-xs text-muted-foreground">Logo actuel. Importez un nouveau fichier pour le remplacer.</p>
+                            </div>
                             <Input id="logo" type="file" accept="image/*" @change="onLogoChange" :aria-invalid="!!form.errors.logo" />
                         </FormField>
 

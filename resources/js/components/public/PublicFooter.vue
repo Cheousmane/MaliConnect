@@ -115,7 +115,13 @@ const professionalLinks = computed(() => [
 
             <div class="mt-12 flex flex-col items-start justify-between gap-4 border-t border-border/70 pt-6 sm:flex-row sm:items-center">
                 <p class="text-xs text-muted-foreground">© {{ year }} MaliConnect. Tous droits réservés.</p>
-                <p class="text-xs text-muted-foreground">Profils vérifiés avant publication</p>
+                <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground">
+                    <Link :href="route('privacy')" class="transition-colors hover:text-brand-700 dark:hover:text-brand-300">
+                        Politique de confidentialité
+                    </Link>
+                    <span class="hidden sm:inline text-border" aria-hidden="true">•</span>
+                    <span>Profils vérifiés avant publication</span>
+                </div>
             </div>
         </div>
     </footer>

@@ -40,7 +40,7 @@ import {
     TrendingUp,
     Users,
 } from 'lucide-vue-next';
-import { computed } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
 const props = defineProps<{
     categories: LandingCategory[];
@@ -55,6 +55,14 @@ const page = usePage<SharedData>();
 const authUser = computed(() => page.props.auth?.user ?? null);
 
 const profilesWithCoords = computed(() => props.profiles.filter((p) => p.latitude != null && p.longitude != null));
+const mapMarkers = computed(() =>
+    profilesWithCoords.value.map((p) => ({
+        latitude: p.latitude as number,
+        longitude: p.longitude as number,
+        label: p.business_name,
+        href: route('professionals.show', p.slug),
+    })),
+);
 const featuredProfessional = computed(() => props.profiles[0] ?? null);
 const proPlan = computed(() => props.plans.find((plan) => plan.code === 'pro') ?? null);
 
@@ -112,6 +120,26 @@ const ctaProHref = computed(() => (authUser.value ? route('pro.profiles.index') 
 
 const { y: scrollY } = useScroll(typeof window !== 'undefined' ? window : undefined);
 const heroParallax = computed(() => Math.min(24, scrollY.value * 0.05));
+
+let floatObserver: IntersectionObserver | null = null;
+
+onMounted(() => {
+    if (typeof IntersectionObserver === 'undefined') return;
+    floatObserver = new IntersectionObserver(
+        (entries) => {
+            entries.forEach((entry) => {
+                entry.target.classList.toggle('is-visible', entry.isIntersecting);
+            });
+        },
+        { threshold: 0.15 },
+    );
+
+    document.querySelectorAll<HTMLElement>('.landing-float-card').forEach((el) => floatObserver?.observe(el));
+});
+
+onBeforeUnmount(() => {
+    floatObserver?.disconnect();
+});
 </script>
 
 <template>
@@ -339,9 +367,8 @@ const heroParallax = computed(() => Math.min(24, scrollY.value * 0.05));
 
                 <div v-reveal="120" class="mx-auto mt-10 max-w-4xl">
                     <LocationMap
-                        v-if="profilesWithCoords.length"
-                        :latitude="profilesWithCoords[0].latitude"
-                        :longitude="profilesWithCoords[0].longitude"
+                        v-if="mapMarkers.length"
+                        :markers="mapMarkers"
                         height="360px"
                     />
                     <div v-else class="rounded-2xl border border-dashed border-border bg-card p-8 text-center">
@@ -377,7 +404,8 @@ const heroParallax = computed(() => Math.min(24, scrollY.value * 0.05));
                         v-for="(step, index) in steps"
                         :key="step.title"
                         v-reveal="index * 120"
-                        class="relative rounded-2xl border border-border/70 bg-card p-6 shadow-soft"
+                        class="landing-float-card relative rounded-2xl border border-border/70 bg-card p-6 shadow-soft"
+                        :style="{ '--float-delay': `${index * 180}ms` }"
                     >
                         <div class="flex items-center justify-between">
                             <span class="step-icon flex size-11 items-center justify-center rounded-xl bg-brand-50 text-brand-600 ring-1 ring-inset ring-brand-100 dark:bg-brand-950/60 dark:text-brand-300 dark:ring-brand-900">
@@ -459,7 +487,7 @@ const heroParallax = computed(() => Math.min(24, scrollY.value * 0.05));
                     <div v-reveal="120" class="relative">
                         <div class="pointer-events-none absolute -inset-4 rounded-3xl bg-brand-100/60 blur-2xl dark:bg-brand-950/40" aria-hidden="true" />
 
-                        <div class="relative rounded-2xl border border-border/70 bg-card p-5 shadow-elevated sm:p-6">
+                        <div class="landing-float-card relative rounded-2xl border border-border/70 bg-card p-5 shadow-elevated sm:p-6">
                             <div class="flex items-center justify-between gap-3">
                                 <div class="flex items-center gap-2.5">
                                     <span class="flex size-9 items-center justify-center rounded-lg bg-brand-50 text-brand-600 dark:bg-brand-950/60 dark:text-brand-300">
@@ -599,7 +627,8 @@ const heroParallax = computed(() => Math.min(24, scrollY.value * 0.05));
                         v-for="(commitment, index) in commitments"
                         :key="commitment.title"
                         v-reveal="index * 90"
-                        class="lift rounded-2xl border border-border/70 bg-card p-5 shadow-soft hover:border-brand-200 hover:shadow-card dark:hover:border-brand-800"
+                        class="landing-float-card lift rounded-2xl border border-border/70 bg-card p-5 shadow-soft hover:border-brand-200 hover:shadow-card dark:hover:border-brand-800"
+                        :style="{ '--float-delay': `${index * 140}ms` }"
                     >
                         <span class="lift-icon flex size-10 items-center justify-center rounded-xl bg-brand-50 text-brand-600 ring-1 ring-inset ring-brand-100 dark:bg-brand-950/60 dark:text-brand-300 dark:ring-brand-900">
                             <component :is="commitment.icon" class="size-5" aria-hidden="true" />
@@ -656,3 +685,30 @@ const heroParallax = computed(() => Math.min(24, scrollY.value * 0.05));
         </section>
     </PublicLayout>
 </template>
+
+<style scoped>
+.landing-float-card.is-visible {
+    animation: landing-float 5s ease-in-out var(--float-delay, 300ms) infinite;
+}
+
+.landing-float-card.is-visible:hover,
+.landing-float-card.is-visible:focus-within {
+    animation-play-state: paused;
+}
+
+@keyframes landing-float {
+    0%,
+    100% {
+        transform: translateY(0) scale(1);
+    }
+    50% {
+        transform: translateY(-8px) scale(1.005);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .landing-float-card.is-visible {
+        animation: none;
+    }
+}
+</style>

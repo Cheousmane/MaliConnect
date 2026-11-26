@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\GuidedTourController;
 use App\Models\Category;
 use App\Models\Plan;
 use App\Models\PricingSheet;
@@ -143,6 +144,8 @@ Route::get('/', function () {
         ])->values()->all(),
     ]);
 })->name('home');
+
+Route::get('/politique-de-confidentialite', fn () => Inertia::render('PrivacyPolicy'))->name('privacy');
 
 Route::get('dashboard', function (Request $request) {
     $user = $request->user();
@@ -352,6 +355,12 @@ Route::get('dashboard', function (Request $request) {
         'activities' => $activities,
     ]);
 })->middleware(['auth', 'verified', 'active'])->name('dashboard');
+
+Route::middleware(['auth', 'verified', 'active', 'throttle:60,1'])->prefix('tour')->name('tour.')->group(function () {
+    Route::get('/', [GuidedTourController::class, 'show'])->name('show');
+    Route::patch('/', [GuidedTourController::class, 'update'])->name('update');
+    Route::post('/restart', [GuidedTourController::class, 'restart'])->name('restart');
+});
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

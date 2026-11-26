@@ -143,12 +143,17 @@ const pageUrl = (page: number): string => route('favorites.index', { page });
                             </span>
                         </div>
 
-                        <Button as-child variant="soft" size="sm" class="justify-between">
-                            <Link :href="route('professionals.show', favorite.profile.slug)">
-                                Voir le profil
-                                <ArrowRight class="size-4" aria-hidden="true" />
-                            </Link>
-                        </Button>
+                        <div class="flex flex-wrap gap-2">
+                            <Button as-child variant="soft" size="sm" class="flex-1 justify-between">
+                                <Link :href="route('professionals.show', favorite.profile.slug)">
+                                    Voir le profil
+                                    <ArrowRight class="size-4" aria-hidden="true" />
+                                </Link>
+                            </Button>
+                            <Button as-child variant="outline" size="sm">
+                                <Link :href="route('requests.create', { provider: favorite.profile.slug })">Demander</Link>
+                            </Button>
+                        </div>
                     </CardContent>
                 </Card>
             </div>

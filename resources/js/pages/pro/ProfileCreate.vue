@@ -69,6 +69,13 @@ const form = useForm({
 // Les sous-catégories dépendent de la catégorie choisie.
 const subcategories = computed(() => props.categories.find((category) => String(category.id) === form.category_id)?.subcategories ?? []);
 
+const onLocationResolved = (location: { address: string; city: string; commune: string; quartier: string }) => {
+    if (location.address) form.address = location.address;
+    if (location.city) form.city = location.city;
+    if (location.commune) form.commune = location.commune;
+    if (location.quartier) form.quartier = location.quartier;
+};
+
 watch(
     () => form.category_id,
     () => {
@@ -242,9 +249,11 @@ const onLogoChange = (event: Event) => {
                             :latitude="form.latitude ? Number(form.latitude) : null"
                             :longitude="form.longitude ? Number(form.longitude) : null"
                             interactive
+                            reverse-geocode
                             height="300px"
                             @update:latitude="form.latitude = String($event)"
                             @update:longitude="form.longitude = String($event)"
+                            @resolve="onLocationResolved"
                         />
 
                         <div class="grid gap-4 sm:grid-cols-2">

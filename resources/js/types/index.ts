@@ -64,6 +64,7 @@ export interface SharedData {
     };
     notificationsPreview: NotificationItem[];
     unreadNotificationsCount: number;
+    unreadMessageNotificationsCount: number;
     ziggy: {
         location: string;
         url: string;

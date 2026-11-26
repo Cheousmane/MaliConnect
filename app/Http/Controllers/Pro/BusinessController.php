@@ -182,7 +182,7 @@ class BusinessController extends Controller
             'address' => ['nullable', 'string', 'max:255'],
             'city' => ['required', 'string', 'max:100'],
             'commune' => ['nullable', 'string', 'max:100'],
-            'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048', 'dimensions:max_width=2048,max_height=2048'],
         ]);
 
         if ($request->hasFile('logo')) {

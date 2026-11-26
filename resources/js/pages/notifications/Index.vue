@@ -15,6 +15,7 @@ type Props = {
         data: NotificationItem[];
         current_page: number;
         last_page: number;
+        per_page: number;
         total: number;
     };
     unreadCount: number;
@@ -36,6 +37,8 @@ const toneClasses: Record<string, string> = {
 };
 
 const tone = (value?: StatusTone): StatusTone => value ?? 'neutral';
+
+const numberFor = (index: number): number => (props.notifications.current_page - 1) * props.notifications.per_page + index + 1;
 
 const markAllAsRead = () => {
     processing.value = true;
@@ -97,7 +100,7 @@ const pageUrl = (page: number): string => route('notifications.index', { page })
                 <CardContent>
                     <ul v-if="props.notifications.data.length" class="space-y-2">
                         <li
-                            v-for="notification in props.notifications.data"
+                            v-for="(notification, index) in props.notifications.data"
                             :key="notification.id"
                             class="flex items-start gap-2 rounded-xl border border-border/70 bg-background transition-colors hover:border-border"
                             :class="!notification.read ? 'border-brand-100 bg-brand-50/30 dark:border-brand-900/70 dark:bg-brand-950/20' : ''"
@@ -109,6 +112,9 @@ const pageUrl = (page: number): string => route('notifications.index', { page })
                                 preserve-scroll
                                 class="flex min-w-0 flex-1 items-start gap-3 p-4 text-left"
                             >
+                                <span class="mt-2 w-6 shrink-0 text-right text-[11px] font-semibold text-muted-foreground/70" aria-hidden="true">
+                                    {{ numberFor(index) }}
+                                </span>
                                 <span :class="['flex size-10 shrink-0 items-center justify-center rounded-xl', toneClasses[tone(notification.tone)]]">
                                     <NotificationIcon :name="notification.icon" class="size-4" />
                                 </span>

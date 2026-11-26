@@ -60,7 +60,13 @@ function markAllAsRead() {
 <template>
     <DropdownMenu>
         <DropdownMenuTrigger as-child>
-            <Button variant="ghost" size="icon" class="relative text-muted-foreground" :aria-label="`Notifications (${unreadCount} non lues)`">
+            <Button
+                variant="ghost"
+                size="icon"
+                class="relative text-muted-foreground"
+                :aria-label="`Notifications (${unreadCount} non lues)`"
+                data-tour="header-notifications"
+            >
                 <Bell class="size-[18px]" aria-hidden="true" />
                 <span
                     v-if="unreadCount > 0"
@@ -94,7 +100,7 @@ function markAllAsRead() {
 
             <div v-if="items.length > 0" class="max-h-[min(24rem,60vh)] overflow-y-auto p-1.5">
                 <Link
-                    v-for="notification in items"
+                    v-for="(notification, index) in items"
                     :key="notification.id"
                     :href="route('notifications.read', notification.id)"
                     method="post"
@@ -103,6 +109,9 @@ function markAllAsRead() {
                     class="flex w-full gap-3 rounded-lg px-2.5 py-3 text-left transition-colors hover:bg-muted/60"
                     :class="!notification.read ? 'bg-brand-50/40 dark:bg-brand-950/20' : ''"
                 >
+                    <span class="mt-2 w-4 shrink-0 text-right text-[10px] font-semibold text-muted-foreground/60" aria-hidden="true">
+                        {{ index + 1 }}
+                    </span>
                     <div :class="['flex size-9 shrink-0 items-center justify-center rounded-lg', toneClasses[notification.tone ?? 'neutral']]">
                         <component :is="resolveIcon(notification.icon)" class="size-4" aria-hidden="true" />
                     </div>
